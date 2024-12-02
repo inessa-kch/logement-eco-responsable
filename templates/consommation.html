@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Consommation{% endblock %}
+
+{% block content %}
+<h1>Consommation</h1>
+<div id="chart_div"></div>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        var data = google.visualization.arrayToDataTable({{ chart_data | safe }});
+
+        var options = {
+            title: 'Consommation',
+            curveType: 'function',
+            legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+
+        chart.draw(data, options);
+    }
+</script>
+{% endblock %}

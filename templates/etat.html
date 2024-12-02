@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}État des Capteurs/Actionneurs{% endblock %}
+
+{% block content %}
+<h1>État des Capteurs/Actionneurs</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Type</th>
+            <th>État</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for capteur in capteurs %}
+        <tr>
+            <td>{{ capteur.nom }}</td>
+            <td>{{ capteur.type }}</td>
+            <td>{{ capteur.etat }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

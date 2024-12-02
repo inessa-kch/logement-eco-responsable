@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<h1>Bienvenue sur le site du Logement Éco-Responsable</h1>
+<img src="{{ url_for('static', path='images/eco-resp-logo.jpg') }}" alt="Logo Éco-Responsable" class="img-fluid">
+<p>Utilisez la navigation pour accéder aux différentes fonctionnalités.</p>
+
+<h2>Prévisions Météo pour les 5 prochains jours</h2>
+<ul>
+    {% for day in weather_data %}
+    <li>
+        Date: {{ day.date.split('T')[0] }} - Max: {{ day.temperature_max }}°C, Min: {{ day.temperature_min }}°C
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

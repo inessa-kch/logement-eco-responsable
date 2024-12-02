@@ -338,6 +338,80 @@ def read_facture_logement(facture_id: int, session: SessionDep):
 
 
 
+# WEBSITE
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request, session: SessionDep, city: str = "Paris"):
+    # Fetch pie chart data
+    query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
+    grouped_data = session.exec(query).all()
+    chart_data = [["Type de facture", "Montant total"]] + [[item.type_facture, item.total_amount] for item in grouped_data]
+
+    # Fetch weather data
+    base_url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": 48.8566,
+        "longitude": 2.3522,
+        "daily": "temperature_2m_max,temperature_2m_min",
+        "timezone": "Europe/Paris",
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(base_url, params=params)
+            response.raise_for_status()  # Génère une exception en cas d'erreur HTTP
+            data = response.json()
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"Erreur de requête: {e}")
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+
+    # Process weather data
+    forecast = data.get("daily", {})
+    if not forecast:
+        raise HTTPException(status_code=404, detail="Prévisions météo introuvables.")
+
+    weather_data = [
+        {
+            "date": forecast["time"][i],
+            "temperature_max": forecast["temperature_2m_max"][i],
+            "temperature_min": forecast["temperature_2m_min"][i],
+        }
+        for i in range(len(forecast["time"]))
+    ]
+
+    return templates.TemplateResponse("index.html", {"request": request, "chart_data": chart_data, "weather_data": weather_data})
+
+
+@app.get("/consommation", response_class=HTMLResponse)
+async def consommation(request: Request, session: SessionDep):
+    # Fetch data for the chart
+    query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
+    grouped_data = session.exec(query).all()
+    chart_data = [["Type de facture", "Montant total"]] + [[item.type_facture, item.total_amount] for item in grouped_data]
+    return templates.TemplateResponse("consommation.html", {"request": request, "chart_data": chart_data})
+
+@app.get("/etat", response_class=HTMLResponse)
+async def etat(request: Request, session: SessionDep):
+    capteurs = session.exec(select(CapteurActionneur)).all()
+    return templates.TemplateResponse("etat.html", {"request": request, "capteurs": capteurs})
+
+@app.get("/economies", response_class=HTMLResponse)
+async def economies(request: Request, session: SessionDep):
+    # Fetch data for the chart
+    query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
+    grouped_data = session.exec(query).all()
+    chart_data = [["Type de facture", "Montant total"]] + [[item.type_facture, item.total_amount] for item in grouped_data]
+    return templates.TemplateResponse("economies.html", {"request": request, "chart_data": chart_data})
+
+
+@app.get("/configuration", response_class=HTMLResponse)
+async def configuration(request: Request):
+    return templates.TemplateResponse("configuration.html", {"request": request})
+
+
+
+
 @app.get("/website", response_class=HTMLResponse)
 async def get_website_data(request: Request, session: SessionDep, city: str = "Paris"):
     # Fetch pie chart data
@@ -390,6 +464,5 @@ async def get_website_data(request: Request, session: SessionDep, city: str = "P
 
 if __name__ == "__main__":
     import uvicorn
-    # uvicorn.run(app, host="127.0.0.1", port=8000)
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 

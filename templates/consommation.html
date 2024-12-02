@@ -4,13 +4,24 @@
 
 {% block content %}
 <h1>Consommation</h1>
-<div id="chart_div"></div>
+
+<!-- Conteneur pour le graphique de consommation -->
+<div id="chart_div" style="width: 900px; height: 500px;"></div>
+
+<!-- Conteneur pour le pie chart -->
+<div id="piechart" style="width: 900px; height: 500px;"></div>
+
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
     google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(drawChart);
+    google.charts.setOnLoadCallback(drawCharts);
 
-    function drawChart() {
+    function drawCharts() {
+        drawConsumptionChart();
+        drawPieChart();
+    }
+
+    function drawConsumptionChart() {
         var data = google.visualization.arrayToDataTable({{ chart_data | safe }});
 
         var options = {
@@ -20,6 +31,19 @@
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+
+        chart.draw(data, options);
+    }
+
+    function drawPieChart() {
+        var data = google.visualization.arrayToDataTable({{ chart_data | safe }});
+
+        var options = {
+            is3D: true,
+            title: 'Répartition des Factures',
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
 
         chart.draw(data, options);
     }

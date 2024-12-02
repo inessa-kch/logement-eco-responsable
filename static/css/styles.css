@@ -1,0 +1,17 @@
+body {
+    background-color: #ffffff; /* Light grey background */
+}
+
+h4 {
+    color: rgb(0, 0, 0); /* White text color for paragraphs */
+}
+
+h1 {
+    color: rgb(0, 0, 0); /* White text color for paragraphs */
+}
+
+.small-image {
+    width: 290px; /* Set the desired width */
+    height: auto; /* Maintain aspect ratio */
+}
+

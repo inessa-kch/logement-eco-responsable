@@ -3,16 +3,36 @@
 {% block title %}Accueil{% endblock %}
 
 {% block content %}
-<h1>Bienvenue sur le site du Logement Éco-Responsable</h1>
-<img src="{{ url_for('static', path='images/eco-resp-logo.jpg') }}" alt="Logo Éco-Responsable" class="img-fluid">
-<p>Utilisez la navigation pour accéder aux différentes fonctionnalités.</p>
+<h1 class="text-center">Bienvenue sur votre tableau de bord</h1>
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center">
+        <img src="{{ url_for('static', path='images/eco.png') }}" alt="Logo Éco-Responsable" class="img-fluid mb-4 small-image">
+    </div>
+</div>
+<div class="row justify-content-center no-gutters">
+    <div class="col-md-10">
+        <h4 class="text-center">Prévisions Météo pour les 7 prochains jours</h4>
+        <div class="d-flex flex-wrap justify-content-center">
+            {% for day in weather_data %}
+            <div class="day-box text-center">
+                <div class="card text-center border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ day.date }}</h5>
+                        <!-- <img src="{{ url_for('static', path='images/icons/rain.png') }}" alt="Weather Icon" class="weather-icon"> -->
+                        <img src="/static/images/icons/{{ day.weather_gif }}" alt="{{ day.weather_condition }}" class="weather-icon">
+                        <p class="card-text mt-2 temperature-row">
+                            <span class="temp-max">{{ day.temperature_max }}°C</span>
+                            <span class="temp-min">{{ day.temperature_min }}°C</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-<h2>Prévisions Météo pour les 5 prochains jours</h2>
-<ul>
-    {% for day in weather_data %}
-    <li>
-        Date: {{ day.date.split('T')[0] }} - Max: {{ day.temperature_max }}°C, Min: {{ day.temperature_min }}°C
-    </li>
-    {% endfor %}
-</ul>
+{% block scripts %}
+<script src="{{ url_for('static', path='js/weather.js') }}"></script>
 {% endblock %}

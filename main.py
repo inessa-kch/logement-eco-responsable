@@ -1,4 +1,4 @@
-from typing import Optional,Annotated
+from typing import Optional,Annotated, AsyncGenerator
 from fastapi import Depends, FastAPI, HTTPException, Query, Request,Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
@@ -7,6 +7,8 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select
 from sqlalchemy import func
 from datetime import datetime
 import httpx
+from contextlib import asynccontextmanager
+
 
 sql_file_name = "database.db"
 sqlite_url = f"sqlite:///{sql_file_name}"
@@ -20,16 +22,22 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep =  Depends(get_session)
 
-app = FastAPI()
+# Define the lifespan function
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    # Startup logic
+    create_db_and_tables()
+    yield  # Pause here for app's lifecycle
+    # Shutdown logic (e.g., cleanup resources if needed)
+
+# Create the FastAPI app with the lifespan
+app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-@app.on_event("startup")
-async def on_startup():
-    create_db_and_tables()
 
 #suivi du tuto suivant pour l'ecriture du code: https://fastapi.tiangolo.com/tutorial/sql-databases/#run-the-code 
 
@@ -93,17 +101,30 @@ class Facture(SQLModel, table=True):
 
 
 
+
+
 # LOGEMENT
 @app.post("/logement/")
-def create_logement(logement: Logement, session: SessionDep) -> Logement:
+def create_logement(
+    adresse: str = Form(...),
+    numero_telephone: str = Form(...),
+    adresse_ip: str = Form(...),
+    session: SessionDep = Depends(get_session)
+) -> Logement:
+    logement = Logement(
+        adresse=adresse,
+        numero_telephone=numero_telephone,
+        adresse_ip=adresse_ip
+    )
     session.add(logement)
     session.commit()
     session.refresh(logement)
     return logement
 
+
 @app.get("/logement/")
 def read_logements(
-    session: SessionDep,
+    session: SessionDep = Depends(get_session),
     offset: int = 0,
     limit: Annotated[int, Query(le=100)]=100,
 ) -> list[Logement]:
@@ -111,14 +132,14 @@ def read_logements(
     return logements
 
 @app.get("/logement/{logement_id}")
-def read_logement(logement_id: int, session: SessionDep) -> Logement:
+def read_logement(logement_id: int, session: SessionDep = Depends(get_session)) -> Logement:
     logement = session.get(Logement, logement_id)
     if not logement:
         raise HTTPException(status_code=404, detail="Logement not found")
     return logement
 
 @app.delete("/logement/{logement_id}")
-def delete_logement(logement_id: int, session: SessionDep):
+def delete_logement(logement_id: int, session: SessionDep = Depends(get_session)):
     logement = session.get(Logement, logement_id)
     if not logement:
         raise HTTPException(status_code=404, detail="Logement not found")
@@ -128,15 +149,42 @@ def delete_logement(logement_id: int, session: SessionDep):
 
 # PIECE
 @app.post("/piece/")
-def create_piece(piece: Piece, session: SessionDep) -> Piece:
+def create_piece(
+    logement_id: int = Form(...),
+    nom: str = Form(...),
+    position_x: float = Form(...),
+    position_y: float = Form(...),
+    position_z: float = Form(...),
+    session: Session = Depends(get_session)
+):
+    # Fetch the logement using the selected ID
+    logement = session.get(Logement, logement_id)
+    
+    if not logement:
+        raise HTTPException(status_code=404, detail="Logement not found")
+
+    # Create a new piece and link it to the logement
+    piece = Piece(
+        logement_id=logement_id,
+        nom=nom,
+        position_x=position_x,
+        position_y=position_y,
+        position_z=position_z
+    )
+
     session.add(piece)
     session.commit()
     session.refresh(piece)
-    return piece
+
+    return {"message": "Pièce ajoutée avec succès", "piece": piece}
+
+
+
+
 
 @app.get("/piece/")
 def read_pieces(
-    session: SessionDep,
+    session: SessionDep = Depends(get_session),
     offset: int = 0,
     limit: Annotated[int, Query(le=100)]=100,
 ) -> list[Piece]:
@@ -144,14 +192,14 @@ def read_pieces(
     return pieces
 
 @app.get("/piece/{piece_id}")
-def read_piece(piece_id: int, session: SessionDep) -> Piece:
+def read_piece(piece_id: int, session: SessionDep = Depends(get_session)) -> Piece:
     piece = session.get(Piece, piece_id)
     if not piece:
         raise HTTPException(status_code=404, detail="Piece not found")
     return piece
 
 @app.delete("/piece/{piece_id}")
-def delete_piece(piece_id: int, session: SessionDep):
+def delete_piece(piece_id: int, session: SessionDep = Depends(get_session)):
     piece = session.get(Piece, piece_id)
     if not piece:
         raise HTTPException(status_code=404, detail="Piece not found")
@@ -159,20 +207,22 @@ def delete_piece(piece_id: int, session: SessionDep):
     session.commit()
     return {"ok": True}
 
-@app.get("/piece/{piece_id}/logement")
-def read_piece_logement(piece_id: int, session: SessionDep):
-    piece = session.get(Piece, piece_id)
-    if not piece:
-        raise HTTPException(status_code=404, detail="Piece not found")
-    logement = session.get(Logement, piece.logement_id)
+@app.get("/logement/{logement_id}/piece/{piece_id}")
+def read_piece_logement(logement_id: int, piece_id: int, session: Session = Depends(get_session)):
+    logement = session.get(Logement, logement_id)
     if not logement:
         raise HTTPException(status_code=404, detail="Logement not found")
-    return logement
+    
+    piece = session.get(Piece, piece_id)
+    if not piece or piece.logement_id != logement_id:
+        raise HTTPException(status_code=404, detail="Piece not found in the specified Logement")
+    
+    return piece
 
 
 # TYPE CAPTEUR ACTIONNEUR
 @app.post("/typecapteuractionneur/")
-def create_typecapteuractionneur(typecapteuractionneur: TypeCapteurActionneur, session: SessionDep) -> TypeCapteurActionneur:
+def create_typecapteuractionneur(typecapteuractionneur: TypeCapteurActionneur, session: SessionDep = Depends(get_session)) -> TypeCapteurActionneur:
     session.add(typecapteuractionneur)
     session.commit()
     session.refresh(typecapteuractionneur)
@@ -180,7 +230,7 @@ def create_typecapteuractionneur(typecapteuractionneur: TypeCapteurActionneur, s
 
 @app.get("/typecapteuractionneur/")
 def read_typecapteuractionneurs(
-    session: SessionDep,
+    session: SessionDep = Depends(get_session),
     offset: int = 0,
     limit: Annotated[int, Query(le=100)]=100,
 ) -> list[TypeCapteurActionneur]:
@@ -188,14 +238,14 @@ def read_typecapteuractionneurs(
     return typecapteuractionneurs
 
 @app.get("/typecapteuractionneur/{typecapteuractionneur_id}")
-def read_typecapteuractionneur(typecapteuractionneur_id: int, session: SessionDep) -> TypeCapteurActionneur:
+def read_typecapteuractionneur(typecapteuractionneur_id: int, session: SessionDep = Depends(get_session)) -> TypeCapteurActionneur:
     typecapteuractionneur = session.get(TypeCapteurActionneur, typecapteuractionneur_id)
     if not typecapteuractionneur:
         raise HTTPException(status_code=404, detail="TypeCapteurActionneur not found")
     return typecapteuractionneur
 
 @app.delete("/typecapteuractionneur/{typecapteuractionneur_id}")
-def delete_typecapteuractionneur(typecapteuractionneur_id: int, session: SessionDep):
+def delete_typecapteuractionneur(typecapteuractionneur_id: int, session: SessionDep = Depends(get_session)):
     typecapteuractionneur = session.get(TypeCapteurActionneur, typecapteuractionneur_id)
     if not typecapteuractionneur:
         raise HTTPException(status_code=404, detail="TypeCapteurActionneur not found")
@@ -206,7 +256,7 @@ def delete_typecapteuractionneur(typecapteuractionneur_id: int, session: Session
 
 # CAPTEUR ACTIONNEUR
 @app.post("/capteuractionneur/")
-def create_capteuractionneur(capteuractionneur: CapteurActionneur, session: SessionDep) -> CapteurActionneur:
+def create_capteuractionneur(capteuractionneur: CapteurActionneur, session: SessionDep = Depends(get_session)) -> CapteurActionneur:
     session.add(capteuractionneur)
     session.commit()
     session.refresh(capteuractionneur)
@@ -214,7 +264,7 @@ def create_capteuractionneur(capteuractionneur: CapteurActionneur, session: Sess
 
 @app.get("/capteuractionneur/")
 def read_capteuractionneurs(
-    session: SessionDep,
+    session: SessionDep = Depends(get_session),
     offset: int = 0,
     limit: Annotated[int, Query(le=100)]=100,
 ) -> list[CapteurActionneur]:
@@ -222,14 +272,14 @@ def read_capteuractionneurs(
     return capteuractionneurs
 
 @app.get("/capteuractionneur/{capteuractionneur_id}")
-def read_capteuractionneur(capteuractionneur_id: int, session: SessionDep) -> CapteurActionneur:
+def read_capteuractionneur(capteuractionneur_id: int, session: SessionDep = Depends(get_session)) -> CapteurActionneur:
     capteuractionneur = session.get(CapteurActionneur, capteuractionneur_id)
     if not capteuractionneur:
         raise HTTPException(status_code=404, detail="CapteurActionneur not found")
     return capteuractionneur
 
 @app.delete("/capteuractionneur/{capteuractionneur_id}")
-def delete_capteuractionneur(capteuractionneur_id: int, session: SessionDep):
+def delete_capteuractionneur(capteuractionneur_id: int, session: SessionDep = Depends(get_session)):
     capteuractionneur = session.get(CapteurActionneur, capteuractionneur_id)
     if not capteuractionneur:
         raise HTTPException(status_code=404, detail="CapteurActionneur not found")
@@ -238,7 +288,7 @@ def delete_capteuractionneur(capteuractionneur_id: int, session: SessionDep):
     return {"ok": True}
 
 @app.get("/capteuractionneur/{capteuractionneur_id}/piece")
-def read_capteuractionneur_piece(capteuractionneur_id: int, session: SessionDep):
+def read_capteuractionneur_piece(capteuractionneur_id: int, session: SessionDep = Depends(get_session)):
     capteuractionneur = session.get(CapteurActionneur, capteuractionneur_id)
     if not capteuractionneur:
         raise HTTPException(status_code=404, detail="CapteurActionneur not found")
@@ -250,7 +300,7 @@ def read_capteuractionneur_piece(capteuractionneur_id: int, session: SessionDep)
 
 # MESURE
 @app.post("/mesure/")
-def create_mesure(mesure: Mesure, session: SessionDep) -> Mesure:
+def create_mesure(mesure: Mesure, session: SessionDep = Depends(get_session)) -> Mesure:
     session.add(mesure)
     session.commit()
     session.refresh(mesure)
@@ -258,7 +308,7 @@ def create_mesure(mesure: Mesure, session: SessionDep) -> Mesure:
 
 @app.get("/mesure/")
 def read_mesures(
-    session: SessionDep,
+    session: SessionDep = Depends(get_session),
     offset: int = 0,
     limit: Annotated[int, Query(le=100)]=100,
 ) -> list[Mesure]:
@@ -266,14 +316,14 @@ def read_mesures(
     return mesures
 
 @app.get("/mesure/{mesure_id}")
-def read_mesure(mesure_id: int, session: SessionDep) -> Mesure:
+def read_mesure(mesure_id: int, session: SessionDep = Depends(get_session)) -> Mesure:
     mesure = session.get(Mesure, mesure_id)
     if not mesure:
         raise HTTPException(status_code=404, detail="Mesure not found")
     return mesure
 
 @app.delete("/mesure/{mesure_id}")
-def delete_mesure(mesure_id: int, session: SessionDep):
+def delete_mesure(mesure_id: int, session: SessionDep = Depends(get_session)):
     mesure = session.get(Mesure, mesure_id)
     if not mesure:
         raise HTTPException(status_code=404, detail="Mesure not found")
@@ -282,7 +332,7 @@ def delete_mesure(mesure_id: int, session: SessionDep):
     return {"ok": True}
 
 @app.get("/mesure/{mesure_id}/capteuractionneur")
-def read_mesure_capteuractionneur(mesure_id: int, session: SessionDep):
+def read_mesure_capteuractionneur(mesure_id: int, session: SessionDep = Depends(get_session)):
     mesure = session.get(Mesure, mesure_id)
     if not mesure:
         raise HTTPException(status_code=404, detail="Mesure not found")
@@ -294,7 +344,7 @@ def read_mesure_capteuractionneur(mesure_id: int, session: SessionDep):
 
 # FACTURE
 @app.post("/facture/")
-def create_facture(facture: Facture, session: SessionDep) -> Facture:
+def create_facture(facture: Facture, session: SessionDep = Depends(get_session)) -> Facture:
     session.add(facture)
     session.commit()
     session.refresh(facture)
@@ -302,7 +352,7 @@ def create_facture(facture: Facture, session: SessionDep) -> Facture:
 
 @app.get("/facture/")
 def read_factures(
-    session: SessionDep,
+    session: SessionDep = Depends(get_session),
     offset: int = 0,
     limit: Annotated[int, Query(le=100)]=100,
 ) -> list[Facture]:
@@ -310,14 +360,14 @@ def read_factures(
     return factures
 
 @app.get("/facture/{facture_id}")
-def read_facture(facture_id: int, session: SessionDep) -> Facture:
+def read_facture(facture_id: int, session: SessionDep = Depends(get_session)) -> Facture:
     facture = session.get(Facture, facture_id)
     if not facture:
         raise HTTPException(status_code=404, detail="Facture not found")
     return facture
 
 @app.delete("/facture/{facture_id}")
-def delete_facture(facture_id: int, session: SessionDep):
+def delete_facture(facture_id: int, session: SessionDep = Depends(get_session)):
     facture = session.get(Facture, facture_id)
     if not facture:
         raise HTTPException(status_code=404, detail="Facture not found")
@@ -326,7 +376,7 @@ def delete_facture(facture_id: int, session: SessionDep):
     return {"ok": True}
 
 @app.get("/facture/{facture_id}/logement")
-def read_facture_logement(facture_id: int, session: SessionDep):
+def read_facture_logement(facture_id: int, session: SessionDep = Depends(get_session)):
     facture = session.get(Facture, facture_id)
     if not facture:
         raise HTTPException(status_code=404, detail="Facture not found")
@@ -341,7 +391,7 @@ def read_facture_logement(facture_id: int, session: SessionDep):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request, session: SessionDep, city: str = "Paris"):
+async def read_root(request: Request, session: SessionDep = Depends(get_session), city: str = "Paris"):
     # Fetch pie chart data
     query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
     grouped_data = session.exec(query).all()
@@ -429,7 +479,7 @@ async def read_root(request: Request, session: SessionDep, city: str = "Paris"):
 
 
 @app.get("/consommation", response_class=HTMLResponse)
-async def consommation(request: Request, session: SessionDep):
+async def consommation(request: Request, session: SessionDep = Depends(get_session)):
     # Fetch data for the chart
     query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
     grouped_data = session.exec(query).all()
@@ -437,12 +487,12 @@ async def consommation(request: Request, session: SessionDep):
     return templates.TemplateResponse("consommation.html", {"request": request, "chart_data": chart_data})
 
 @app.get("/etat", response_class=HTMLResponse)
-async def etat(request: Request, session: SessionDep):
+async def etat(request: Request, session: SessionDep = Depends(get_session)):
     capteurs = session.exec(select(CapteurActionneur)).all()
     return templates.TemplateResponse("etat.html", {"request": request, "capteurs": capteurs})
 
 @app.get("/economies", response_class=HTMLResponse)
-async def economies(request: Request, session: SessionDep):
+async def economies(request: Request, session: SessionDep = Depends(get_session)):
     # Fetch data for the chart
     query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
     grouped_data = session.exec(query).all()
@@ -451,9 +501,9 @@ async def economies(request: Request, session: SessionDep):
 
 
 @app.get("/configuration", response_class=HTMLResponse)
-async def configuration(request: Request):
-    return templates.TemplateResponse("configuration.html", {"request": request})
-
+async def get_configuration(request: Request, session: SessionDep = Depends(get_session)):
+    logements = session.exec(select(Logement)).all()
+    return templates.TemplateResponse("configuration.html", {"request": request, "logements": logements})
 
 
 

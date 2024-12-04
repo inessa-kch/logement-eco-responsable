@@ -6,10 +6,10 @@
 <h1>Configuration</h1>
 
 <!-- Ajouter Logement -->
-<div class="row justify-content-center">
-    <div class="col-md-6">
+<div class="row justify-content-start">
+    <div class="col-md-4">
         <h4>Ajouter Logement</h4>
-        <form method="post" action="/logement/">
+        <form id="logementForm">
             <div class="form-group">
                 <label for="adresse">Adresse</label>
                 <input type="text" class="form-control" id="adresse" name="adresse" required>
@@ -27,41 +27,49 @@
     </div>
 </div>
 
-<!-- Ajouter Piece -->
-<div class="row justify-content-center">
-    <div class="col-md-6">
+<!-- Ajouter Pièce -->
+<div class="row justify-content-center mt-4">
+    <div class="col-md-4 offset-md-0">
         <h4>Ajouter Pièce</h4>
-        <form method="post" action="/add_piece">
+        <form id="pieceForm" method="post" action="/piece/">
             <div class="form-group">
-                <label for="logement_id">ID Logement</label>
-                <input type="text" class="form-control" id="logement_id" name="logement_id" required>
+                <label for="logement_id">Logement</label>
+                <select class="form-control" id="logement_id" name="logement_id" required>
+                    <!-- Dropdown menu populated by the server -->
+                    {% for logement in logements %}
+                        <option value="{{ logement.id_logement }}">{{ logement.adresse }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-group">
                 <label for="nom">Nom</label>
                 <input type="text" class="form-control" id="nom" name="nom" required>
             </div>
             <div class="form-group">
-                <label for="position_x">Position X</label>
-                <input type="text" class="form-control" id="position_x" name="position_x" required>
-            </div>
-            <div class="form-group">
-                <label for="position_y">Position Y</label>
-                <input type="text" class="form-control" id="position_y" name="position_y" required>
-            </div>
-            <div class="form-group">
-                <label for="position_z">Position Z</label>
-                <input type="text" class="form-control" id="position_z" name="position_z" required>
+                <label for="position">Position (X, Y, Z)</label>
+                <div class="row">
+                    <div class="col">
+                        <input type="number" class="form-control" id="position_x" name="position_x" placeholder="X" required>
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control" id="position_y" name="position_y" placeholder="Y" required>
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control" id="position_z" name="position_z" placeholder="Z" required>
+                    </div>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary">Ajouter Pièce</button>
         </form>
     </div>
 </div>
 
+
 <!-- Ajouter Capteur -->
-<div class="row justify-content-center">
-    <div class="col-md-6">
+<div class="row justify-content-end mt-4">
+    <div class="col-md-4">
         <h4>Ajouter Capteur/Actionneur</h4>
-        <form method="post" action="/add_capteur">
+        <form id="capteurForm">
             <div class="form-group">
                 <label for="piece_id">ID Pièce</label>
                 <input type="text" class="form-control" id="piece_id" name="piece_id" required>
@@ -83,4 +91,59 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/weather.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const logementForm = document.getElementById('logementForm');
+        logementForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = new FormData(logementForm);
+            const response = await fetch('/logement', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                alert('Logement ajouté avec succès');
+                logementForm.reset();
+            } else {
+                alert('Erreur lors de l\'ajout du logement');
+            }
+        });
+
+        const pieceForm = document.getElementById('pieceForm');
+        pieceForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = new FormData(pieceForm);
+            const response = await fetch('/piece', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                alert('Pièce ajoutée avec succès');
+                pieceForm.reset();
+            } else {
+                alert('Erreur lors de l\'ajout de la pièce');
+            }
+        });
+
+        const capteurForm = document.getElementById('capteurForm');
+        capteurForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = new FormData(capteurForm);
+            const response = await fetch('/capteur', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                alert('Capteur/Actionneur ajouté avec succès');
+                capteurForm.reset();
+            } else {
+                alert('Erreur lors de l\'ajout du capteur/actionneur');
+            }
+        });
+    });
+</script>
 {% endblock %}

@@ -256,7 +256,19 @@ def delete_typecapteuractionneur(typecapteuractionneur_id: int, session: Session
 
 # CAPTEUR ACTIONNEUR
 @app.post("/capteuractionneur/")
-def create_capteuractionneur(capteuractionneur: CapteurActionneur, session: SessionDep = Depends(get_session)) -> CapteurActionneur:
+def create_capteuractionneur(
+    piece_id: int = Form(...),
+    reference_commerciale: str = Form(...),
+    port_communication: int = Form(...),
+    type_id: int = Form(...),
+    session: Session = Depends(get_session)
+) -> CapteurActionneur:
+    capteuractionneur = CapteurActionneur(
+        id_piece=piece_id,
+        reference_commerciale=reference_commerciale,
+        port_communication=port_communication,
+        id_type=type_id
+    )
     session.add(capteuractionneur)
     session.commit()
     session.refresh(capteuractionneur)
@@ -503,9 +515,13 @@ async def economies(request: Request, session: SessionDep = Depends(get_session)
 @app.get("/configuration", response_class=HTMLResponse)
 async def get_configuration(request: Request, session: SessionDep = Depends(get_session)):
     logements = session.exec(select(Logement)).all()
-    return templates.TemplateResponse("configuration.html", {"request": request, "logements": logements})
+    types = session.exec(select(TypeCapteurActionneur)).all()
+    return templates.TemplateResponse("configuration.html", {"request": request, "logements": logements, "types": types})
 
-
+@app.get("/logement/{logement_id}/pieces")
+def get_pieces_by_logement(logement_id: int, session: Session = Depends(get_session)):
+    pieces = session.exec(select(Piece).where(Piece.logement_id == logement_id)).all()
+    return pieces
 
 if __name__ == "__main__":
     import uvicorn

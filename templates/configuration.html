@@ -4,19 +4,83 @@
 
 {% block content %}
 <h1>Configuration</h1>
-<form method="post" action="/configuration">
-    <div class="form-group">
-        <label for="nom">Nom</label>
-        <input type="text" class="form-control" id="nom" name="nom">
+
+<!-- Ajouter Logement -->
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h4>Ajouter Logement</h4>
+        <form method="post" action="/logement/">
+            <div class="form-group">
+                <label for="adresse">Adresse</label>
+                <input type="text" class="form-control" id="adresse" name="adresse" required>
+            </div>
+            <div class="form-group">
+                <label for="numero_telephone">Numéro de Téléphone</label>
+                <input type="text" class="form-control" id="numero_telephone" name="numero_telephone" required>
+            </div>
+            <div class="form-group">
+                <label for="adresse_ip">Adresse IP</label>
+                <input type="text" class="form-control" id="adresse_ip" name="adresse_ip" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Ajouter Logement</button>
+        </form>
     </div>
-    <div class="form-group">
-        <label for="type">Type</label>
-        <input type="text" class="form-control" id="type" name="type">
+</div>
+
+<!-- Ajouter Piece -->
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h4>Ajouter Pièce</h4>
+        <form method="post" action="/add_piece">
+            <div class="form-group">
+                <label for="logement_id">ID Logement</label>
+                <input type="text" class="form-control" id="logement_id" name="logement_id" required>
+            </div>
+            <div class="form-group">
+                <label for="nom">Nom</label>
+                <input type="text" class="form-control" id="nom" name="nom" required>
+            </div>
+            <div class="form-group">
+                <label for="position_x">Position X</label>
+                <input type="text" class="form-control" id="position_x" name="position_x" required>
+            </div>
+            <div class="form-group">
+                <label for="position_y">Position Y</label>
+                <input type="text" class="form-control" id="position_y" name="position_y" required>
+            </div>
+            <div class="form-group">
+                <label for="position_z">Position Z</label>
+                <input type="text" class="form-control" id="position_z" name="position_z" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Ajouter Pièce</button>
+        </form>
     </div>
-    <div class="form-group">
-        <label for="etat">État</label>
-        <input type="text" class="form-control" id="etat" name="etat">
+</div>
+
+<!-- Ajouter Capteur -->
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h4>Ajouter Capteur/Actionneur</h4>
+        <form method="post" action="/add_capteur">
+            <div class="form-group">
+                <label for="piece_id">ID Pièce</label>
+                <input type="text" class="form-control" id="piece_id" name="piece_id" required>
+            </div>
+            <div class="form-group">
+                <label for="reference_commerciale">Référence Commerciale</label>
+                <input type="text" class="form-control" id="reference_commerciale" name="reference_commerciale" required>
+            </div>
+            <div class="form-group">
+                <label for="port_communication">Port de Communication</label>
+                <input type="text" class="form-control" id="port_communication" name="port_communication" required>
+            </div>
+            <div class="form-group">
+                <label for="type_id">ID Type</label>
+                <input type="text" class="form-control" id="type_id" name="type_id" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Ajouter Capteur/Actionneur</button>
+        </form>
     </div>
-    <button type="submit" class="btn btn-primary">Enregistrer</button>
-</form>
+</div>
+
 {% endblock %}

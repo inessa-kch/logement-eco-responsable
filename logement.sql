@@ -101,4 +101,8 @@ INSERT INTO Facture (type_facture, date_facture, montant, valeur_consommation,un
 VALUES
 ('Eau', '2024-11-12', 47, 296.2,'L', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine')),
 ('Electricite', '2024-11-12', 52, 650.8 ,'kWh', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine')),
-('Internet', '2024-11-12', 25, 15.4, 'Go', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine'));
+('Internet', '2024-11-12', 25, 15.4, 'Go', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine')),
+('Eau', '2024-10-12', 43, 254.1,'L', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine')),
+('Electricite', '2024-10-12', 48, 478.4 ,'kWh', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine')),
+('Internet', '2024-10-12', 25, 21.6, 'Go', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine'));
+

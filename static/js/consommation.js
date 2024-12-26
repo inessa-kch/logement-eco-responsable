@@ -191,4 +191,63 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Handle form submission for adding a new Facture
+    const factureForm = document.getElementById('factureForm');
+    factureForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        if (!factureForm.checkValidity()) {
+            alert('Veuillez remplir tous les champs.');
+            return;
+        }
+        const formData = new FormData(factureForm);
+        const response = await fetch('/facture', {
+            method: 'POST',
+            body: formData
+        });
+        if (response.ok) {
+            const newFacture = await response.json();
+            alert('Facture ajoutée avec succès');
+            updateCharts(newFacture);
+            factureForm.reset();
+        } else {
+            alert('Erreur lors de l\'ajout de la facture');
+        }
+    });
+
+    function updateCharts(newFacture) {
+        const { type_facture, date_facture, montant, valeur_consommation, unite_consommation } = newFacture;
+
+        // Update line charts
+        if (type_facture === 'internet') {
+            sortedInternetData.push([date_facture, valeur_consommation, unite_consommation]);
+            sortedInternetData.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+            internetChart.data.labels = sortedInternetData.map(item => item[0]);
+            internetChart.data.datasets[0].data = sortedInternetData.map(item => item[1]);
+            internetChart.update();
+        } else if (type_facture === 'electricite') {
+            sortedElectriciteData.push([date_facture, valeur_consommation, unite_consommation]);
+            sortedElectriciteData.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+            electricityChart.data.labels = sortedElectriciteData.map(item => item[0]);
+            electricityChart.data.datasets[0].data = sortedElectriciteData.map(item => item[1]);
+            electricityChart.update();
+        } else if (type_facture === 'eau') {
+            sortedEauData.push([date_facture, valeur_consommation, unite_consommation]);
+            sortedEauData.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+            waterChart.data.labels = sortedEauData.map(item => item[0]);
+            waterChart.data.datasets[0].data = sortedEauData.map(item => item[1]);
+            waterChart.update();
+        }
+
+        // Update pie chart
+        const existingType = chartData.find(item => item[0] === type_facture && item[2] === unite_consommation);
+        if (existingType) {
+            existingType[1] += montant;
+        } else {
+            chartData.push([type_facture, montant, unite_consommation]);
+        }
+        facturePieChart.data.labels = chartData.slice(1).map(item => item[0]);
+        facturePieChart.data.datasets[0].data = chartData.slice(1).map(item => item[1]);
+        facturePieChart.update();
+    }
 });

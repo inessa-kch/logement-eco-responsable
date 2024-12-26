@@ -15,6 +15,46 @@
 <div id="eauData" style="display:none;">{{ eau_data | tojson }}</div>
 <div id="chartData" style="display:none;">{{ chart_data | tojson }}</div>
 
+<!-- Form to add a new Facture -->
+<h2>Ajouter Facture</h2>
+<form id="factureForm">
+    <div class="form-group">
+        <label for="logement_id">Logement</label>
+        <select class="form-control" id="id_logement" name="id_logement" required>
+            <option value="" disabled selected>Select Logement</option>
+            <!-- Dropdown menu populated by the server -->
+            {% for logement in logements %}
+                <option value="{{ logement.id_logement }}">{{ logement.adresse }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="type_facture">Type de Facture</label>
+        <select class="form-control" id="type_facture" name="type_facture" required>
+            <option value="internet">Internet</option>
+            <option value="electricite">Electricité</option>
+            <option value="eau">Eau</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="date_facture">Date de Facture</label>
+        <input type="date" class="form-control" id="date_facture" name="date_facture" required>
+    </div>
+    <div class="form-group">
+        <label for="montant">Montant</label>
+        <input type="number" class="form-control" id="montant" name="montant" required>
+    </div>
+    <div class="form-group">
+        <label for="valeur_consommation">Valeur de Consommation</label>
+        <input type="number" class="form-control" id="valeur_consommation" name="valeur_consommation" required>
+    </div>
+    <div class="form-group">
+        <label for="unite_consommation">Unité de Consommation</label>
+        <input type="text" class="form-control" id="unite_consommation" name="unite_consommation" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Ajouter Facture</button>
+</form>
+
 <!-- Conteneur pour le graphique de consommation d'internet -->
 <h2>Internet Consumption</h2>
 <canvas id="internetChart" width="450" height="250"></canvas>

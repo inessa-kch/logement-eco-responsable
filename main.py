@@ -356,7 +356,24 @@ def read_mesure_capteuractionneur(mesure_id: int, session: SessionDep = Depends(
 
 # FACTURE
 @app.post("/facture/")
-def create_facture(facture: Facture, session: SessionDep = Depends(get_session)) -> Facture:
+def create_facture(
+    id_logement: int = Form(...),
+    type_facture: str = Form(...),
+    date_facture: str = Form(...),
+    montant: float = Form(...),
+    valeur_consommation: float = Form(...),
+    unite_consommation: str = Form(...),
+    session: Session = Depends(get_session)
+) -> Facture:
+    print(f"Received logement_id: {id_logement}")
+    facture = Facture(
+        id_logement=id_logement,
+        type_facture=type_facture,
+        date_facture=date_facture,
+        montant=montant,
+        valeur_consommation=valeur_consommation,
+        unite_consommation=unite_consommation
+    )
     session.add(facture)
     session.commit()
     session.refresh(facture)
@@ -489,17 +506,11 @@ async def read_root(request: Request, session: SessionDep = Depends(get_session)
     return templates.TemplateResponse("index.html", {"request": request, "chart_data": chart_data, "weather_data": weather_data})
 
 
-# @app.get("/consommation", response_class=HTMLResponse)
-# async def get_consommation(request: Request, session: Session = Depends(get_session)):
-#     # Fetch data for the chart (example data)
-#     query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
-#     grouped_data = session.exec(query).all()
-#     chart_data = [["Type de facture", "Montant total"]] + [[item.type_facture, item.total_amount] for item in grouped_data]
-    
-#     return templates.TemplateResponse("consommation.html", {"request": request, "chart_data": chart_data})
+
 
 @app.get("/consommation", response_class=HTMLResponse)
 async def get_consommation(request: Request, session: Session = Depends(get_session)):
+    logements = session.query(Logement).all()
     # Fetch data for internet, electricity, and water consumption
     internet_data = session.exec(select(Facture.date_facture, Facture.valeur_consommation, Facture.unite_consommation).where(Facture.type_facture == 'Internet')).all()
     electricite_data = session.exec(select(Facture.date_facture, Facture.valeur_consommation, Facture.unite_consommation).where(Facture.type_facture == 'Electricite')).all()
@@ -515,6 +526,7 @@ async def get_consommation(request: Request, session: Session = Depends(get_sess
     
     return templates.TemplateResponse("consommation.html", {
         "request": request,
+        "logements": logements,
         "internet_data": internet_data,
         "electricite_data": electricite_data,
         "eau_data": eau_data,

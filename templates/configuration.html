@@ -5,8 +5,8 @@
 {% block content %}
 <h1>Configuration</h1>
 
-<!-- Ajouter Logement -->
 <div class="row">
+    <!-- Ajouter Logement -->
     <div class="col-md-4">
         <h4>Ajouter Logement</h4>
         <form id="logementForm">
@@ -22,18 +22,18 @@
                 <label for="adresse_ip">Adresse IP</label>
                 <input type="text" class="form-control" id="adresse_ip" name="adresse_ip" required>
             </div>
-            <button type="submit" class="btn btn-primary">Ajouter Logement</button>
+            <button type="submit" class="btn custom-button">Ajouter Logement</button>
         </form>
     </div>
 
-
-<!-- Ajouter Pièce -->
+    <!-- Ajouter Pièce -->
     <div class="col-md-4">
         <h4>Ajouter Pièce</h4>
         <form id="pieceForm" method="post" action="/piece/">
             <div class="form-group">
                 <label for="logement_id">Logement</label>
                 <select class="form-control" id="logement_id" name="logement_id" required>
+                    <option value="" disabled selected>Select Logement</option>
                     <!-- Dropdown menu populated by the server -->
                     {% for logement in logements %}
                         <option value="{{ logement.id_logement }}">{{ logement.adresse }}</option>
@@ -58,19 +58,18 @@
                     </div>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Ajouter Pièce</button>
+            <button type="submit" class="btn custom-button">Ajouter Pièce</button>
         </form>
     </div>
 
-
-
-<!-- Ajouter Capteur -->
+    <!-- Ajouter Capteur -->
     <div class="col-md-4">
         <h4>Ajouter Capteur/Actionneur</h4>
         <form id="capteurForm">
             <div class="form-group">
-                <label for="logement_id">Logement</label>
+                <label for="logement_id_capteur">Logement</label>
                 <select class="form-control" id="logement_id_capteur" name="logement_id" required>
+                    <option value="" disabled selected>Select Logement</option>
                     <!-- Dropdown menu populated by the server -->
                     {% for logement in logements %}
                         <option value="{{ logement.id_logement }}">{{ logement.adresse }}</option>
@@ -80,6 +79,7 @@
             <div class="form-group">
                 <label for="piece_id">Pièce</label>
                 <select class="form-control" id="piece_id" name="piece_id" required>
+                    <option value="" disabled selected>Select Piece</option>
                     <!-- Dropdown menu populated by the server -->
                 </select>
             </div>
@@ -94,13 +94,14 @@
             <div class="form-group">
                 <label for="type_id">ID Type</label>
                 <select class="form-control" id="type_id" name="type_id" required>
+                    <option value="" disabled selected>Select Type</option>
                     <!-- Dropdown menu populated by the server -->
                     {% for type in types %}
                         <option value="{{ type.id_type }}">{{ type.nom_type }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Ajouter Capteur/Actionneur</button>
+            <button type="submit" class="btn custom-button">Ajouter Capteur/Actionneur</button>
         </form>
     </div>
 </div>

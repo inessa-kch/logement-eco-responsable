@@ -1,65 +1,111 @@
 document.addEventListener('DOMContentLoaded', function() {
     const logementForm = document.getElementById('logementForm');
+    const pieceForm = document.getElementById('pieceForm');
+    const capteurForm = document.getElementById('capteurForm');
+    const logementSelectForPiece = document.getElementById('logement_id');
+    const pieceSelect = document.getElementById('piece_id');
+    const logementSelectForCapteur = document.getElementById('logement_id_capteur');
+    const pieceSelectForCapteur = document.getElementById('piece_id');
+
     logementForm.addEventListener('submit', async function(event) {
         event.preventDefault();
+        if (!logementForm.checkValidity()) {
+            alert('Veuillez remplir tous les champs.');
+            return;
+        }
         const formData = new FormData(logementForm);
         const response = await fetch('/logement', {
             method: 'POST',
             body: formData
         });
         if (response.ok) {
-            alert('Logement ajouté avec succès');
+            const newLogement = await response.json();
+            
+            updateLogementDropdowns(newLogement);
             logementForm.reset();
         } else {
-            alert('Erreur lors de l\'ajout du logement');
+            //alert('Erreur lors de l\'ajout du logement');
         }
     });
 
-    const pieceForm = document.getElementById('pieceForm');
     pieceForm.addEventListener('submit', async function(event) {
         event.preventDefault();
+        if (!pieceForm.checkValidity()) {
+            alert('Veuillez remplir tous les champs.');
+            return;
+        }
         const formData = new FormData(pieceForm);
         const response = await fetch('/piece', {
             method: 'POST',
             body: formData
         });
         if (response.ok) {
-            alert('Pièce ajoutée avec succès');
             pieceForm.reset();
         } else {
-            alert('Erreur lors de l\'ajout de la pièce');
+           // alert('Erreur lors de l\'ajout de la pièce');
         }
     });
 
-    const capteurForm = document.getElementById('capteurForm');
     capteurForm.addEventListener('submit', async function(event) {
         event.preventDefault();
+        if (!capteurForm.checkValidity()) {
+            alert('Veuillez remplir tous les champs.');
+            return;
+        }
         const formData = new FormData(capteurForm);
         const response = await fetch('/capteuractionneur', {
             method: 'POST',
             body: formData
         });
         if (response.ok) {
-            alert('Capteur/Actionneur ajouté avec succès');
             capteurForm.reset();
         } else {
-            alert('Erreur lors de l\'ajout du capteur/actionneur');
+            //alert('Erreur lors de l\'ajout du capteur/actionneur');
         }
     });
 
-    const logementSelect = document.getElementById('logement_id_capteur');
-    const pieceSelect = document.getElementById('piece_id');
-
-    logementSelect.addEventListener('change', async function() {
-        const logementId = logementSelect.value;
+    logementSelectForPiece.addEventListener('change', async function() {
+        const logementId = logementSelectForPiece.value;
         const response = await fetch(`/logement/${logementId}/pieces`);
-        const pieces = await response.json();
-        pieceSelect.innerHTML = '';
-        pieces.forEach(piece => {
-            const option = document.createElement('option');
-            option.value = piece.id_piece;
-            option.textContent = piece.nom;
-            pieceSelect.appendChild(option);
-        });
+        if (response.ok) {
+            const pieces = await response.json();
+            pieceSelect.innerHTML = '<option value="" disabled selected>Select Piece</option>';
+            pieces.forEach(piece => {
+                const option = document.createElement('option');
+                option.value = piece.id_piece;
+                option.textContent = piece.nom;
+                pieceSelect.appendChild(option);
+            });
+        } else {
+            alert('Erreur lors de la récupération des pièces');
+        }
     });
+
+    logementSelectForCapteur.addEventListener('change', async function() {
+        const logementId = logementSelectForCapteur.value;
+        const response = await fetch(`/logement/${logementId}/pieces`);
+        if (response.ok) {
+            const pieces = await response.json();
+            pieceSelectForCapteur.innerHTML = '<option value="" disabled selected>Select Piece</option>';
+            pieces.forEach(piece => {
+                const option = document.createElement('option');
+                option.value = piece.id_piece;
+                option.textContent = piece.nom;
+                pieceSelectForCapteur.appendChild(option);
+            });
+        } else {
+            alert('Erreur lors de la récupération des pièces');
+        }
+    });
+
+    async function updateLogementDropdowns(newLogement) {
+        const logementOption = document.createElement('option');
+        logementOption.value = newLogement.id_logement;
+        logementOption.textContent = newLogement.adresse;
+
+        const logementDropdowns = document.querySelectorAll('#logement_id, #logement_id_capteur');
+        logementDropdowns.forEach(dropdown => {
+            dropdown.appendChild(logementOption.cloneNode(true));
+        });
+    }
 });

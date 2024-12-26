@@ -106,3 +106,4 @@ VALUES
 ('Electricite', '2024-10-12', 48, 478.4 ,'kWh', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine')),
 ('Internet', '2024-10-12', 25, 21.6, 'Go', (SELECT id_logement FROM Logement WHERE adresse = '124 boulevard de la madeleine'));
 
+SELECT * FROM facture WHERE type_facture IN ('Internet', 'Electricite', 'Eau');

@@ -8,7 +8,7 @@ from sqlalchemy import func
 from datetime import datetime
 import httpx
 from contextlib import asynccontextmanager
-
+import json
 
 sql_file_name = "database.db"
 sqlite_url = f"sqlite:///{sql_file_name}"
@@ -489,14 +489,39 @@ async def read_root(request: Request, session: SessionDep = Depends(get_session)
     return templates.TemplateResponse("index.html", {"request": request, "chart_data": chart_data, "weather_data": weather_data})
 
 
+# @app.get("/consommation", response_class=HTMLResponse)
+# async def get_consommation(request: Request, session: Session = Depends(get_session)):
+#     # Fetch data for the chart (example data)
+#     query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
+#     grouped_data = session.exec(query).all()
+#     chart_data = [["Type de facture", "Montant total"]] + [[item.type_facture, item.total_amount] for item in grouped_data]
+    
+#     return templates.TemplateResponse("consommation.html", {"request": request, "chart_data": chart_data})
 
 @app.get("/consommation", response_class=HTMLResponse)
-async def consommation(request: Request, session: SessionDep = Depends(get_session)):
-    # Fetch data for the chart
-    query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
+async def get_consommation(request: Request, session: Session = Depends(get_session)):
+    # Fetch data for internet, electricity, and water consumption
+    internet_data = session.exec(select(Facture.date_facture, Facture.valeur_consommation, Facture.unite_consommation).where(Facture.type_facture == 'Internet')).all()
+    electricite_data = session.exec(select(Facture.date_facture, Facture.valeur_consommation, Facture.unite_consommation).where(Facture.type_facture == 'Electricite')).all()
+    eau_data = session.exec(select(Facture.date_facture, Facture.valeur_consommation, Facture.unite_consommation).where(Facture.type_facture == 'Eau')).all()
+
+    internet_data = [list(row) for row in internet_data]
+    electricite_data = [list(row) for row in electricite_data]
+    eau_data = [list(row) for row in eau_data]
+    # Fetch data for the pie chart
+    query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount"), Facture.unite_consommation).group_by(Facture.type_facture, Facture.unite_consommation)
     grouped_data = session.exec(query).all()
-    chart_data = [["Type de facture", "Montant total"]] + [[item.type_facture, item.total_amount] for item in grouped_data]
-    return templates.TemplateResponse("consommation.html", {"request": request, "chart_data": chart_data})
+    chart_data = [["Type de facture", "Montant total", "Unite"]] + [[item.type_facture, item.total_amount, item.unite_consommation] for item in grouped_data]
+    
+    return templates.TemplateResponse("consommation.html", {
+        "request": request,
+        "internet_data": internet_data,
+        "electricite_data": electricite_data,
+        "eau_data": eau_data,
+        "chart_data": chart_data
+    })
+
+
 
 @app.get("/etat", response_class=HTMLResponse)
 async def etat(request: Request, session: SessionDep = Depends(get_session)):

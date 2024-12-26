@@ -8,19 +8,24 @@
 /* Style for the individual day boxes */
 .day-box {
     flex: 1; /* Equal width for all days */
-    max-width: 14%; /* Restrict size for 7 items on a row */
-    margin: 0; /* Remove default margin */
+    max-width: 12%; /* Restrict size for 7 items on a row */
+    margin: 0 10px; /* Remove default margin */
     padding: 0 5px; /* Add slight padding */
     text-align: center;
 }
 
 /* Card adjustments */
-.card {
+.card-body {
     background-color: #ffffff;
-    color: #000000; /* White text */
-    border-radius: 5px; /* Remove rounded corners */
+    color: #000000; /* Black text */
+    border-radius: 5px; /* Rounded corners */
     border: none;
-    padding: 10px;
+    padding: 15px;
+    width: 150px; /* Fixed width */
+    height: 200px; /* Fixed height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Ensure content is spaced evenly */
 }
 
 .weather-icon {

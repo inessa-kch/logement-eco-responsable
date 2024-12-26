@@ -2,50 +2,35 @@
 
 {% block title %}Consommation{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/consommation.css') }}">
+{% endblock %}
+
 {% block content %}
 <h1>Consommation</h1>
 
-<!-- Conteneur pour le graphique de consommation -->
-<div id="chart_div" style="width: 900px; height: 500px;"></div>
+<!-- Hidden elements to pass data to JavaScript -->
+<div id="internetData" style="display:none;">{{ internet_data | tojson }}</div>
+<div id="electriciteData" style="display:none;">{{ electricite_data | tojson }}</div>
+<div id="eauData" style="display:none;">{{ eau_data | tojson }}</div>
+<div id="chartData" style="display:none;">{{ chart_data | tojson }}</div>
+
+<!-- Conteneur pour le graphique de consommation d'internet -->
+<h2>Internet Consumption</h2>
+<canvas id="internetChart" width="450" height="250"></canvas>
+
+<!-- Conteneur pour le graphique de consommation d'électricité -->
+<h2>Electricity Consumption</h2>
+<canvas id="electricityChart" width="450" height="250"></canvas>
+
+<!-- Conteneur pour le graphique de consommation d'eau -->
+<h2>Water Consumption</h2>
+<canvas id="waterChart" width="450" height="250"></canvas>
 
 <!-- Conteneur pour le pie chart -->
-<div id="piechart" style="width: 900px; height: 500px;"></div>
+<h2>Distribution of Factures</h2>
+<canvas id="facturePieChart" width="450" height="250"></canvas>
 
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript">
-    google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(drawCharts);
-
-    function drawCharts() {
-        drawConsumptionChart();
-        drawPieChart();
-    }
-
-    function drawConsumptionChart() {
-        var data = google.visualization.arrayToDataTable({{ chart_data | safe }});
-
-        var options = {
-            title: 'Consommation',
-            curveType: 'function',
-            legend: { position: 'bottom' }
-        };
-
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-
-        chart.draw(data, options);
-    }
-
-    function drawPieChart() {
-        var data = google.visualization.arrayToDataTable({{ chart_data | safe }});
-
-        var options = {
-            is3D: true,
-            title: 'Répartition des Factures',
-        };
-
-        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
-
-        chart.draw(data, options);
-    }
-</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', path='js/consommation.js') }}"></script>
 {% endblock %}

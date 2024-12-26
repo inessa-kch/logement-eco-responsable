@@ -2,16 +2,55 @@ body {
     background-color: #c1dcbc; /* Light grey background */
 }
 
-h4 {
+h1,h4 {
+    text-align: center;
     color: rgb(75, 164, 64); /* White text color for paragraphs */
 }
 
-h1 {
-    color:rgb(75, 164, 64); /* White text color for paragraphs */
+h2 {
+    color: rgb(75, 164, 64);
+    margin-top: 20px;
+    text-align: center;
 }
 
 .small-image {
     width: 290px; /* Set the desired width */
     height: auto; /* Maintain aspect ratio */
 }
+
+.custom-button {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.custom-button:hover {
+    background-color: #45a049; /* Darker green */
+}
+
+
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-control {
+    border-radius: 2px;
+    padding: 5px;
+}
+
+.row {
+    margin-bottom: 30px;
+}
+
+
 

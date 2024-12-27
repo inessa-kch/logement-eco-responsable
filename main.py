@@ -2,6 +2,7 @@ from typing import Optional,Annotated, AsyncGenerator
 from fastapi import Depends, FastAPI, HTTPException, Query, Request,Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from sqlalchemy import func
@@ -508,31 +509,62 @@ async def read_root(request: Request, session: SessionDep = Depends(get_session)
 
 
 
-@app.get("/consommation", response_class=HTMLResponse)
-async def get_consommation(request: Request, session: Session = Depends(get_session)):
-    logements = session.query(Logement).all()
-    # Fetch data for internet, electricity, and water consumption
-    internet_data = session.exec(select(Facture.date_facture, Facture.valeur_consommation, Facture.unite_consommation).where(Facture.type_facture == 'Internet')).all()
-    electricite_data = session.exec(select(Facture.date_facture, Facture.valeur_consommation, Facture.unite_consommation).where(Facture.type_facture == 'Electricite')).all()
-    eau_data = session.exec(select(Facture.date_facture, Facture.valeur_consommation, Facture.unite_consommation).where(Facture.type_facture == 'Eau')).all()
 
-    internet_data = [list(row) for row in internet_data]
-    electricite_data = [list(row) for row in electricite_data]
-    eau_data = [list(row) for row in eau_data]
-    # Fetch data for the pie chart
-    query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount"), Facture.unite_consommation).group_by(Facture.type_facture, Facture.unite_consommation)
-    grouped_data = session.exec(query).all()
-    chart_data = [["Type de facture", "Montant total", "Unite"]] + [[item.type_facture, item.total_amount, item.unite_consommation] for item in grouped_data]
+
+
+
+@app.get("/consommation", response_class=HTMLResponse)
+async def get_consommation(
+    request: Request,
+    session: Session = Depends(get_session),
+    logement_id: Optional[int] = None,
+    json: bool = False
+):
+    logements = session.exec(select(Logement)).all()
+
+    # Query to fetch line chart data for Internet, Electricite, and Eau
+    query = select(
+        Facture.date_facture, 
+        Facture.valeur_consommation, 
+        Facture.unite_consommation, 
+        Facture.id_logement
+    )
     
+    # Filter by logement_id if provided
+    if logement_id is not None:
+        query = query.where(Facture.id_logement == logement_id)
+
+    internet_data = session.exec(query.where(Facture.type_facture == 'Internet')).all()
+    electricite_data = session.exec(query.where(Facture.type_facture == 'Electricite')).all()
+    eau_data = session.exec(query.where(Facture.type_facture == 'Eau')).all()
+
+    # Pie Chart Data - Aggregate by type and filter by logement_id
+    pie_chart_query = select(
+        Facture.type_facture,
+        func.sum(Facture.montant).label("total_montant")
+    ).where(Facture.id_logement == logement_id if logement_id else True)  # Filter dynamically
+    pie_chart_query = pie_chart_query.group_by(Facture.type_facture)
+
+    pie_chart_data = session.exec(pie_chart_query).all()
+
+    # Return JSON for AJAX requests
+    if json:
+        return JSONResponse({
+            "internet_data": [list(row) for row in internet_data],
+            "electricite_data": [list(row) for row in electricite_data],
+            "eau_data": [list(row) for row in eau_data],
+            "pie_chart_data": [list(row) for row in pie_chart_data]
+        })
+
+    # Default: Return HTML page with data
     return templates.TemplateResponse("consommation.html", {
         "request": request,
         "logements": logements,
-        "internet_data": internet_data,
-        "electricite_data": electricite_data,
-        "eau_data": eau_data,
-        "chart_data": chart_data
+        "internet_data": [list(row) for row in internet_data],
+        "electricite_data": [list(row) for row in electricite_data],
+        "eau_data": [list(row) for row in eau_data],
+        "chart_data": [list(row) for row in pie_chart_data]
     })
-
 
 
 @app.get("/etat", response_class=HTMLResponse)

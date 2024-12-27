@@ -1,253 +1,188 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const internetData = JSON.parse(document.getElementById('internetData').textContent);
-    const electriciteData = JSON.parse(document.getElementById('electriciteData').textContent);
-    const eauData = JSON.parse(document.getElementById('eauData').textContent);
-    const chartData = JSON.parse(document.getElementById('chartData').textContent);
+    const logementButtons = document.querySelectorAll('.logement-btn');
+    const chartsContainer = document.querySelector('.charts-container');
+    const factureForm = document.getElementById('factureForm');
+    let selectedLogementId = null;  // Track the currently selected logement
 
-    // Function to sort data by date
-    function sortByDate(data) {
-        return data.sort((a, b) => new Date(a[0]) - new Date(b[0]));
-    }
-
-    // Sort the data by date
-    const sortedInternetData = sortByDate(internetData);
-    const sortedElectriciteData = sortByDate(electriciteData);
-    const sortedEauData = sortByDate(eauData);
-
-    const internetLabels = sortedInternetData.map(item => item[0]); // Assuming date is the first item
-    const internetValues = sortedInternetData.map(item => item[1]);
-    const electriciteLabels = sortedElectriciteData.map(item => item[0]);
-    const electriciteValues = sortedElectriciteData.map(item => item[1]);
-    const eauLabels = sortedEauData.map(item => item[0]);
-    const eauValues = sortedEauData.map(item => item[1]);
-
+    // Initialize charts
     const internetCtx = document.getElementById('internetChart').getContext('2d');
-    const internetChart = new Chart(internetCtx, {
-        type: 'line',
-        data: {
-            labels: internetLabels,
-            datasets: [
-                {
-                    label: 'Internet Consumption',
-                    data: internetValues,
+    const internetChart = createLineChart(internetCtx, 'Internet Consumption');
+
+    const electricityCtx = document.getElementById('electricityChart').getContext('2d');
+    const electricityChart = createLineChart(electricityCtx, 'Electricity Consumption');
+
+    const waterCtx = document.getElementById('waterChart').getContext('2d');
+    const waterChart = createLineChart(waterCtx, 'Water Consumption');
+
+    const pieCtx = document.getElementById('facturePieChart').getContext('2d');
+    const facturePieChart = createPieChart(pieCtx);
+
+    // Chart Creation Functions
+    function createLineChart(ctx, label) {
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: label,
+                    data: [],
                     borderColor: 'rgba(75, 192, 192, 1)',
                     borderWidth: 1,
                     fill: false
-                }
-            ]
-        },
-        options: {
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Consumption'
-                    }
-                }
+                }]
             },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            const unit = sortedInternetData[tooltipItem.dataIndex][2];
-                            return tooltipItem.dataset.label + ': ' + tooltipItem.raw + ' ' + unit;
-                        }
+            options: {
+                scales: {
+                    x: { 
+                        title: { display: true, text: 'Date' }
+                    },
+                    y: { 
+                        title: { display: true, text: 'Consumption' }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
-    const electricityCtx = document.getElementById('electricityChart').getContext('2d');
-    const electricityChart = new Chart(electricityCtx, {
-        type: 'line',
-        data: {
-            labels: electriciteLabels,
-            datasets: [
-                {
-                    label: 'Electricity Consumption',
-                    data: electriciteValues,
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1,
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Consumption'
-                    }
-                }
+    function createPieChart(ctx) {
+        return new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+                    borderWidth: 1
+                }]
             },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            const unit = sortedElectriciteData[tooltipItem.dataIndex][2];
-                            return tooltipItem.dataset.label + ': ' + tooltipItem.raw + ' ' + unit;
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Distribution of Factures' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                const value = tooltipItem.raw;
+                                return `${tooltipItem.label}: €${value.toFixed(2)}`;
+                            }
                         }
                     }
                 }
             }
-        }
+        });
+    }
+    
+    // Fetch and Update Charts on Logement Selection
+    logementButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            selectedLogementId = button.getAttribute('data-logement-id');
+            fetchAndUpdateCharts(selectedLogementId);
+        });
     });
 
-    const waterCtx = document.getElementById('waterChart').getContext('2d');
-    const waterChart = new Chart(waterCtx, {
-        type: 'line',
-        data: {
-            labels: eauLabels,
-            datasets: [
-                {
-                    label: 'Water Consumption',
-                    data: eauValues,
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1,
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Consumption'
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            const unit = sortedEauData[tooltipItem.dataIndex][2];
-                            return tooltipItem.dataset.label + ': ' + tooltipItem.raw + ' ' + unit;
-                        }
-                    }
-                }
-            }
+    async function fetchAndUpdateCharts(logementId) {
+        const response = await fetch(`/consommation?logement_id=${logementId}&json=true`);
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Fetched Data:', data);
+            updateCharts(data);
+            chartsContainer.style.display = 'block';
+        } else {
+            alert('Error fetching data for logement.');
         }
-    });
+    }
 
-    const pieCtx = document.getElementById('facturePieChart').getContext('2d');
-    const facturePieChart = new Chart(pieCtx, {
-        type: 'pie',
-        data: {
-            labels: chartData.slice(1).map(item => item[0]), // Skip the header row
-            datasets: [{
-                data: chartData.slice(1).map(item => item[1]), // Skip the header row
-                backgroundColor: [
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                title: {
-                    display: true,
-                    text: 'Distribution of Factures'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            const item = chartData[tooltipItem.dataIndex + 1]; // Skip the header row
-                            return item[0] + ': ' + item[1] + '€ (' + item[2] + ')';
-                        }
-                    }
-                }
-            }
+    // Update Charts After Fetching Data
+    function updateCharts(data) {
+        const { internet_data, electricite_data, eau_data, pie_chart_data } = data;
+
+        updateChart(internetChart, internet_data);
+        updateChart(electricityChart, electricite_data);
+        updateChart(waterChart, eau_data);
+        updatePieChart(facturePieChart, pie_chart_data);
+    }
+
+    // Handle Chart Updates (Line Charts)
+    function updateChart(chart, chartData) {
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+
+        if (chartData.length === 0) {
+            console.log('No data available for this chart.');
+        } else {
+            chartData.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+
+            const labels = chartData.map(item => item[0]);
+            const values = chartData.map(item => item[1]);
+            
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = values;
         }
-    });
+        chart.update();
+    }
 
-    // Handle form submission for adding a new Facture
-    const factureForm = document.getElementById('factureForm');
+    // Update Pie Chart
+// Update Pie Chart (Fix for Empty Data)
+    function updatePieChart(chart, chartData) {
+        // Clear existing data
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+
+        if (chartData.length === 0) {
+            console.log('No data available for the pie chart.');
+            // If no data, add a placeholder to show empty chart
+            chart.data.labels = ['No Factures'];
+            chart.data.datasets[0].data = [0];  // Placeholder value to keep the chart visible
+            chart.data.datasets[0].backgroundColor = ['rgba(200, 200, 200, 0.2)'];  // Grey out the pie chart
+            chart.data.datasets[0].borderColor = ['rgba(200, 200, 200, 1)'];
+        } else {
+            // Populate pie chart with actual data
+            const labels = chartData.map(item => item[0]);
+            const values = chartData.map(item => item[1]);
+            
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = values;
+            chart.data.datasets[0].backgroundColor = [
+                'rgba(75, 192, 192, 0.2)', 
+                'rgba(255, 99, 132, 0.2)', 
+                'rgba(54, 162, 235, 0.2)'
+            ];
+            chart.data.datasets[0].borderColor = [
+                'rgba(75, 192, 192, 1)', 
+                'rgba(255, 99, 132, 1)', 
+                'rgba(54, 162, 235, 1)'
+            ];
+        }
+        chart.update();
+    }
+
+
+    // Handle Facture Form Submission
     factureForm.addEventListener('submit', async function(event) {
         event.preventDefault();
+        
         if (!factureForm.checkValidity()) {
             alert('Veuillez remplir tous les champs.');
             return;
         }
+
         const formData = new FormData(factureForm);
         const response = await fetch('/facture', {
             method: 'POST',
             body: formData
         });
+
         if (response.ok) {
             const newFacture = await response.json();
-            alert('Facture ajoutée avec succès');
-            updateCharts(newFacture);
+            alert('Facture ajoutée avec succès!');
+            if (selectedLogementId && parseInt(selectedLogementId) === newFacture.id_logement) {
+                fetchAndUpdateCharts(selectedLogementId);
+            }
             factureForm.reset();
         } else {
-            alert('Erreur lors de l\'ajout de la facture');
+            alert('Erreur lors de l\'ajout de la facture.');
         }
     });
-
-    function updateCharts(newFacture) {
-        const { type_facture, date_facture, montant, valeur_consommation, unite_consommation } = newFacture;
-
-        // Update line charts
-        if (type_facture === 'internet') {
-            sortedInternetData.push([date_facture, valeur_consommation, unite_consommation]);
-            sortedInternetData.sort((a, b) => new Date(a[0]) - new Date(b[0]));
-            internetChart.data.labels = sortedInternetData.map(item => item[0]);
-            internetChart.data.datasets[0].data = sortedInternetData.map(item => item[1]);
-            internetChart.update();
-        } else if (type_facture === 'electricite') {
-            sortedElectriciteData.push([date_facture, valeur_consommation, unite_consommation]);
-            sortedElectriciteData.sort((a, b) => new Date(a[0]) - new Date(b[0]));
-            electricityChart.data.labels = sortedElectriciteData.map(item => item[0]);
-            electricityChart.data.datasets[0].data = sortedElectriciteData.map(item => item[1]);
-            electricityChart.update();
-        } else if (type_facture === 'eau') {
-            sortedEauData.push([date_facture, valeur_consommation, unite_consommation]);
-            sortedEauData.sort((a, b) => new Date(a[0]) - new Date(b[0]));
-            waterChart.data.labels = sortedEauData.map(item => item[0]);
-            waterChart.data.datasets[0].data = sortedEauData.map(item => item[1]);
-            waterChart.update();
-        }
-
-        // Update pie chart
-        const existingType = chartData.find(item => item[0] === type_facture && item[2] === unite_consommation);
-        if (existingType) {
-            existingType[1] += montant;
-        } else {
-            chartData.push([type_facture, montant, unite_consommation]);
-        }
-        facturePieChart.data.labels = chartData.slice(1).map(item => item[0]);
-        facturePieChart.data.datasets[0].data = chartData.slice(1).map(item => item[1]);
-        facturePieChart.update();
-    }
 });

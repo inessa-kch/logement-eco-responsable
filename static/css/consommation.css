@@ -1,15 +1,17 @@
-/* Custom styles for the consommation page */
-/* h1 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
+.charts-row {
+    display: flex;
+    justify-content: space-around;  /* Space charts evenly */
+    flex-wrap: wrap;  /* Wrap to next line if screen is too small */
+    margin-bottom: 30px;
 }
 
-h2 {
-    color: #555;
-    margin-top: 20px;
+.chart-item {
+    flex: 1;  /* Allow each chart to grow equally */
+    min-width: 300px;  /* Prevent charts from shrinking too much */
     text-align: center;
-} */
+}
+
+
 
 .charts-container {
     display: block !important;

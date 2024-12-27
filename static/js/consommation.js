@@ -6,43 +6,55 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize charts
     const internetCtx = document.getElementById('internetChart').getContext('2d');
-    const internetChart = createLineChart(internetCtx, 'Internet Consumption');
+    const internetChart = createLineChart(internetCtx, "Consommation d'Internet", 'Go');
 
     const electricityCtx = document.getElementById('electricityChart').getContext('2d');
-    const electricityChart = createLineChart(electricityCtx, 'Electricity Consumption');
+    const electricityChart = createLineChart(electricityCtx, "Consommation d'Electricité", 'kWh');
 
     const waterCtx = document.getElementById('waterChart').getContext('2d');
-    const waterChart = createLineChart(waterCtx, 'Water Consumption');
+    const waterChart = createLineChart(waterCtx, "Consommation d'Eau", 'L');
 
     const pieCtx = document.getElementById('facturePieChart').getContext('2d');
     const facturePieChart = createPieChart(pieCtx);
 
     // Chart Creation Functions
-    function createLineChart(ctx, label) {
+    function createLineChart(ctx, label, defaultUnit) {
         return new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
                 datasets: [{
-                    label: label,
+                    label: label,  // Dataset label (will not appear if legend is hidden)
                     data: [],
                     borderColor: 'rgba(75, 192, 192, 1)',
                     borderWidth: 1,
-                    fill: false
+                    fill: false,
+                    unit: defaultUnit
                 }]
             },
             options: {
                 scales: {
-                    x: { 
-                        title: { display: true, text: 'Date' }
+                    x: { title: { display: true, text: 'Date' }},
+                    y: { title: { display: true, text: 'Consommation' }}
+                },
+                plugins: {
+                    legend: {
+                        display: false  // Hide the legend to avoid duplication
                     },
-                    y: { 
-                        title: { display: true, text: 'Consumption' }
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                const unit = tooltipItem.dataset.unit;
+                                const value = tooltipItem.raw;
+                                return `${value} ${unit}`;
+                            }
+                        }
                     }
                 }
             }
         });
     }
+    
 
     function createPieChart(ctx) {
         return new Chart(ctx, {
@@ -60,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 responsive: true,
                 plugins: {
                     legend: { position: 'top' },
-                    title: { display: true, text: 'Distribution of Factures' },
+                    title: { display: true, text: 'Distribution des Factures (€)' },
                     tooltip: {
                         callbacks: {
                             label: function(tooltipItem) {
@@ -86,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const response = await fetch(`/consommation?logement_id=${logementId}&json=true`);
         if (response.ok) {
             const data = await response.json();
-            console.log('Fetched Data:', data);
             updateCharts(data);
             chartsContainer.style.display = 'block';
         } else {
@@ -114,50 +125,36 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             chartData.sort((a, b) => new Date(a[0]) - new Date(b[0]));
 
-            const labels = chartData.map(item => item[0]);
-            const values = chartData.map(item => item[1]);
-            
+            const labels = chartData.map(item => item[0]);  // Date
+            const values = chartData.map(item => item[1]);  // Consumption
+            const unit = chartData[0][2];  // Unit of consumption
+
             chart.data.labels = labels;
             chart.data.datasets[0].data = values;
+            chart.data.datasets[0].unit = unit;  // Update the dataset with unit
         }
         chart.update();
     }
 
-    // Update Pie Chart
-// Update Pie Chart (Fix for Empty Data)
+    // Update Pie Chart (Fix for Empty Data)
     function updatePieChart(chart, chartData) {
-        // Clear existing data
         chart.data.labels = [];
         chart.data.datasets[0].data = [];
 
         if (chartData.length === 0) {
-            console.log('No data available for the pie chart.');
-            // If no data, add a placeholder to show empty chart
-            chart.data.labels = ['No Factures'];
-            chart.data.datasets[0].data = [0];  // Placeholder value to keep the chart visible
-            chart.data.datasets[0].backgroundColor = ['rgba(200, 200, 200, 0.2)'];  // Grey out the pie chart
+            chart.data.labels = ['Pas de Factures'];
+            chart.data.datasets[0].data = [0];
+            chart.data.datasets[0].backgroundColor = ['rgba(200, 200, 200, 0.2)'];
             chart.data.datasets[0].borderColor = ['rgba(200, 200, 200, 1)'];
         } else {
-            // Populate pie chart with actual data
             const labels = chartData.map(item => item[0]);
             const values = chartData.map(item => item[1]);
             
             chart.data.labels = labels;
             chart.data.datasets[0].data = values;
-            chart.data.datasets[0].backgroundColor = [
-                'rgba(75, 192, 192, 0.2)', 
-                'rgba(255, 99, 132, 0.2)', 
-                'rgba(54, 162, 235, 0.2)'
-            ];
-            chart.data.datasets[0].borderColor = [
-                'rgba(75, 192, 192, 1)', 
-                'rgba(255, 99, 132, 1)', 
-                'rgba(54, 162, 235, 1)'
-            ];
         }
         chart.update();
     }
-
 
     // Handle Facture Form Submission
     factureForm.addEventListener('submit', async function(event) {
@@ -176,7 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (response.ok) {
             const newFacture = await response.json();
-            alert('Facture ajoutée avec succès!');
             if (selectedLogementId && parseInt(selectedLogementId) === newFacture.id_logement) {
                 fetchAndUpdateCharts(selectedLogementId);
             }

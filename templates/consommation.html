@@ -13,7 +13,7 @@
 <h2>Choisissez un Logement</h2>
 <div class="logement-selection">
     {% for logement in logements %}
-    <button class="logement-btn btn btn-outline-primary" data-logement-id="{{ logement.id_logement }}">
+    <button class="btn custom-button" data-logement-id="{{ logement.id_logement }}">
         {{ logement.adresse }}
     </button>
     {% endfor %}
@@ -29,22 +29,22 @@
 <div class="charts-container mt-5" style="display:none;">
     <div class="charts-row">
         <div class="chart-item">
-            <h2>Consommation d'Internet</h2>
+            <h2>Consommation d'Internet (Go)</h2>
             <canvas id="internetChart" width="450" height="250"></canvas>
         </div>
 
         <div class="chart-item">
-            <h2>Consommation d'Electricité</h2>
+            <h2>Consommation d'Electricité (kWh)</h2>
             <canvas id="electricityChart" width="450" height="250"></canvas>
         </div>
 
         <div class="chart-item">
-            <h2>Consommation d'Eau</h2>
+            <h2>Consommation<br>d'Eau (L)</h2>
             <canvas id="waterChart" width="450" height="250"></canvas>
         </div>
     </div>
 
-    <h2 class="mt-5">Distribution des Factures</h2>
+    <h2 class="mt-5">Distribution des Factures (€)</h2>
     <canvas id="facturePieChart" width="450" height="250"></canvas>
 </div>
 
@@ -90,7 +90,7 @@
         <input type="text" class="form-control" id="unite_consommation" name="unite_consommation" required>
     </div>
 
-    <button type="submit" class="btn btn-primary">Ajouter Facture</button>
+    <button type="submit" class="btn custom-button-facture">Ajouter Facture</button>
 </form>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

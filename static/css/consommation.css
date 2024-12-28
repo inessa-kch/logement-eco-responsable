@@ -25,3 +25,39 @@ canvas {
     max-width: 100%;
     height: auto;
 }
+
+.custom-button {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.custom-button:hover {
+    background-color: #45a049; /* Darker green */
+}
+
+.custom-button-facture {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.custom-button-facture:hover {
+    background-color: #45a049; /* Darker green */
+}

@@ -380,14 +380,36 @@ def create_facture(
     session.refresh(facture)
     return facture
 
-@app.get("/facture/")
-def read_factures(
-    session: SessionDep = Depends(get_session),
-    offset: int = 0,
-    limit: Annotated[int, Query(le=100)]=100,
-) -> list[Facture]:
-    factures = session.exec(select(Facture).offset(offset).limit(limit)).all()
-    return factures
+
+
+
+@app.get("/factures", response_class=JSONResponse)
+async def get_factures(
+    request: Request,
+    session: Session = Depends(get_session),
+    logement_id: Optional[int] = None,
+    json: bool = False
+):
+    if logement_id is None:
+        return JSONResponse({"error": "logement_id is required"}, status_code=400)
+    
+    try:
+        query = select(Facture).where(Facture.id_logement == logement_id)
+        factures = session.exec(query).all()
+        print(f"Fetched factures: {factures}")
+    except Exception as e:
+        print(f"Error fetching factures: {e}")
+        return JSONResponse({"error": "Internal Server Error"}, status_code=500)
+    
+    if json:
+        return JSONResponse([facture.dict() for facture in factures])
+    
+    return templates.TemplateResponse("factures.html", {
+        "request": request,
+        "factures": factures
+    })
+
+
 
 @app.get("/facture/{facture_id}")
 def read_facture(facture_id: int, session: SessionDep = Depends(get_session)) -> Facture:

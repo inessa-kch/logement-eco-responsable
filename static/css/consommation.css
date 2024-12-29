@@ -61,3 +61,10 @@ canvas {
 .custom-button-facture:hover {
     background-color: #45a049; /* Darker green */
 }
+
+
+.scrollable-list {
+    max-height: 400px; /* Adjust the height as needed */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Disable horizontal scrolling */
+}

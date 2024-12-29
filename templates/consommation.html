@@ -48,50 +48,63 @@
     <canvas id="facturePieChart" width="450" height="250"></canvas>
 </div>
 
-<!-- Ajouter Facture Form -->
-<h2 class="mt-5">Ajouter Facture</h2>
-<form id="factureForm">
-    <div class="form-group">
-        <label for="id_logement">Logement</label>
-        <select class="form-control" id="id_logement" name="id_logement" required>
-            <option value="" disabled selected>Select Logement</option>
-            {% for logement in logements %}
-                <option value="{{ logement.id_logement }}">{{ logement.adresse }}</option>
-            {% endfor %}
-        </select>
+<!-- Ajouter Facture and Factures List -->
+<div class="facture-container mt-5" style="display: flex;">
+    <!-- Ajouter Facture Form -->
+    <div class="facture-form" style="flex: 1; margin-right: 20px;">
+        <h2>Ajouter Facture</h2>
+        <form id="factureForm">
+            <div class="form-group">
+                <label for="id_logement">Logement</label>
+                <select class="form-control" id="id_logement" name="id_logement" required>
+                    <option value="" disabled selected>Select Logement</option>
+                    {% for logement in logements %}
+                        <option value="{{ logement.id_logement }}">{{ logement.adresse }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="type_facture">Type de Facture</label>
+                <select class="form-control" id="type_facture" name="type_facture" required>
+                    <option value="Internet">Internet</option>
+                    <option value="Electricite">Electricité</option>
+                    <option value="Eau">Eau</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="date_facture">Date de Facture</label>
+                <input type="date" class="form-control" id="date_facture" name="date_facture" required>
+            </div>
+
+            <div class="form-group">
+                <label for="montant">Montant (€)</label>
+                <input type="number" class="form-control" id="montant" name="montant" required>
+            </div>
+
+            <div class="form-group">
+                <label for="valeur_consommation">Valeur de Consommation</label>
+                <input type="number" class="form-control" id="valeur_consommation" name="valeur_consommation" required>
+            </div>
+
+            <div class="form-group">
+                <label for="unite_consommation">Unité</label>
+                <input type="text" class="form-control" id="unite_consommation" name="unite_consommation" required>
+            </div>
+
+            <button type="submit" class="btn custom-button-facture">Ajouter Facture</button>
+        </form>
     </div>
 
-    <div class="form-group">
-        <label for="type_facture">Type de Facture</label>
-        <select class="form-control" id="type_facture" name="type_facture" required>
-            <option value="Internet">Internet</option>
-            <option value="Electricite">Electricité</option>
-            <option value="Eau">Eau</option>
-        </select>
+    <!-- Factures List -->
+    <div class="facture-list" style="flex: 1;">
+        <h2>Factures</h2>
+        <ul id="factureList" class="list-group scrollable-list">
+            <!-- Factures will be dynamically added here -->
+        </ul>
     </div>
-
-    <div class="form-group">
-        <label for="date_facture">Date de Facture</label>
-        <input type="date" class="form-control" id="date_facture" name="date_facture" required>
-    </div>
-
-    <div class="form-group">
-        <label for="montant">Montant (€)</label>
-        <input type="number" class="form-control" id="montant" name="montant" required>
-    </div>
-
-    <div class="form-group">
-        <label for="valeur_consommation">Valeur de Consommation</label>
-        <input type="number" class="form-control" id="valeur_consommation" name="valeur_consommation" required>
-    </div>
-
-    <div class="form-group">
-        <label for="unite_consommation">Unité</label>
-        <input type="text" class="form-control" id="unite_consommation" name="unite_consommation" required>
-    </div>
-
-    <button type="submit" class="btn custom-button-facture">Ajouter Facture</button>
-</form>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', path='js/consommation.js') }}"></script>

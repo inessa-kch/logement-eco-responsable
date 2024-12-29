@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const logementButtons = document.querySelectorAll('.custom-button');
     const chartsContainer = document.querySelector('.charts-container');
     const factureForm = document.getElementById('factureForm');
+    const factureListContainer = document.getElementById('factureList');
     let selectedLogementId = null;  // Track the currently selected logement
 
     // Initialize charts
@@ -105,8 +106,42 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', async function() {
             selectedLogementId = button.getAttribute('data-logement-id');
             fetchAndUpdateCharts(selectedLogementId);
+            fetchAndUpdateFactures(selectedLogementId);
         });
     });
+
+
+    // Fetch Factures for the selected Logement
+    async function fetchAndUpdateFactures(logementId) {
+        const response = await fetch(`/factures?logement_id=${logementId}&json=true`);
+        if (response.ok) {
+            const factures = await response.json();
+            updateFactureList(factures);
+        } else {
+            console.error('Error fetching factures');
+            factureListContainer.innerHTML = '<li class="list-group-item">Erreur de chargement des factures</li>';
+        }
+    }
+
+    // Update the Facture List in the UI
+    function updateFactureList(factures) {
+        factureListContainer.innerHTML = '';  // Clear the existing list
+        if (factures.length === 0) {
+            factureListContainer.innerHTML = '<li class="list-group-item">Aucune facture disponible</li>';
+        } else {
+            factures.forEach(facture => {
+                const factureItem = document.createElement('li');
+                factureItem.classList.add('list-group-item');
+                factureItem.innerHTML = `
+                    <strong>${facture.type_facture}</strong><br>
+                    Date: ${facture.date_facture}<br>
+                    Montant: €${facture.montant}<br>
+                    Consommation: ${facture.valeur_consommation} ${facture.unite_consommation}
+                `;
+                factureListContainer.appendChild(factureItem);
+            });
+        }
+    }
 
     async function fetchAndUpdateCharts(logementId) {
         console.log(`Fetching data for logement ID: ${logementId}`);
@@ -195,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const newFacture = await response.json();
             if (selectedLogementId && parseInt(selectedLogementId) === newFacture.id_logement) {
                 fetchAndUpdateCharts(selectedLogementId);
+                fetchAndUpdateFactures(selectedLogementId);
             }
             factureForm.reset();
         } else {

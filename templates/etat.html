@@ -2,24 +2,37 @@
 
 {% block title %}État des Capteurs/Actionneurs{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/etat.css') }}">
+{% endblock %}
+
 {% block content %}
 <h1>État des Capteurs/Actionneurs</h1>
-<table class="table">
+
+<!-- Logement Selection Buttons -->
+<h2>Choisissez un Logement</h2>
+<div class="logement-selection">
+    {% for logement in logements %}
+    <button class="btn custom-button" data-logement-id="{{ logement.id_logement }}">
+        {{ logement.adresse }}
+    </button>
+    {% endfor %}
+</div>
+
+<table class="table mt-4">
     <thead>
         <tr>
             <th>Nom</th>
             <th>Type</th>
-            <th>État</th>
+            <th>Port</th>
         </tr>
     </thead>
-    <tbody>
-        {% for capteur in capteurs %}
-        <tr>
-            <td>{{ capteur.nom }}</td>
-            <td>{{ capteur.type }}</td>
-            <td>{{ capteur.etat }}</td>
-        </tr>
-        {% endfor %}
+    <tbody id="capteurTableBody">
+        <!-- Capteurs will be dynamically added here -->
     </tbody>
 </table>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/etat.js') }}"></script>
 {% endblock %}

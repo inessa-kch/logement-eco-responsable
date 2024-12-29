@@ -275,14 +275,51 @@ def create_capteuractionneur(
     session.refresh(capteuractionneur)
     return capteuractionneur
 
-@app.get("/capteuractionneur/")
-def read_capteuractionneurs(
-    session: SessionDep = Depends(get_session),
-    offset: int = 0,
-    limit: Annotated[int, Query(le=100)]=100,
-) -> list[CapteurActionneur]:
-    capteuractionneurs = session.exec(select(CapteurActionneur).offset(offset).limit(limit)).all()
-    return capteuractionneurs
+@app.get("/capteuractionneurs", response_class=JSONResponse)
+async def get_capteuractionneurs(
+    session: Session = Depends(get_session),
+    logement_id: Optional[int] = None,
+    json: bool = False
+):
+    if logement_id is None:
+        return JSONResponse({"error": "logement_id is required"}, status_code=400)
+    
+    try:
+        # Fetch all pieces for the given logement_id
+        pieces = session.exec(select(Piece).where(Piece.logement_id == logement_id)).all()
+        piece_ids = [piece.id_piece for piece in pieces]
+
+        # Fetch all capteuractionneurs for the fetched pieces and join with typecapteuractionneur
+        query = (
+            select(CapteurActionneur, TypeCapteurActionneur.nom_type)
+            .join(TypeCapteurActionneur, CapteurActionneur.id_type == TypeCapteurActionneur.id_type)
+            .where(CapteurActionneur.id_piece.in_(piece_ids))
+        )
+        results = session.exec(query).all()
+        capteuractionneurs = [
+            {
+                "id_capAct": capteuractionneur.id_capAct,
+                "reference_commerciale": capteuractionneur.reference_commerciale,
+                "id_piece": capteuractionneur.id_piece,
+                "port_communication": capteuractionneur.port_communication,
+                "nom_type": nom_type,
+            }
+            for capteuractionneur, nom_type in results
+        ]
+        print(f"Fetched capteuractionneurs: {capteuractionneurs}")
+    except Exception as e:
+        print(f"Error fetching capteuractionneurs: {e}")
+        return JSONResponse({"error": "Internal Server Error"}, status_code=500)
+    
+    if json:
+        return JSONResponse(capteuractionneurs)
+    
+    return templates.TemplateResponse("etat.html", {
+        "request": request,
+        "capteuractionneurs": capteuractionneurs
+    })
+
+
 
 @app.get("/capteuractionneur/{capteuractionneur_id}")
 def read_capteuractionneur(capteuractionneur_id: int, session: SessionDep = Depends(get_session)) -> CapteurActionneur:
@@ -409,7 +446,19 @@ async def get_factures(
         "factures": factures
     })
 
-
+@app.delete("/facture/{facture_id}", response_class=JSONResponse)
+async def delete_facture(facture_id: int, session: Session = Depends(get_session)):
+    try:
+        facture = session.get(Facture, facture_id)
+        if not facture:
+            raise HTTPException(status_code=404, detail="Facture not found")
+        
+        session.delete(facture)
+        session.commit()
+        return JSONResponse({"message": "Facture deleted successfully"})
+    except Exception as e:
+        print(f"Error deleting facture: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/facture/{facture_id}")
 def read_facture(facture_id: int, session: SessionDep = Depends(get_session)) -> Facture:
@@ -418,14 +467,7 @@ def read_facture(facture_id: int, session: SessionDep = Depends(get_session)) ->
         raise HTTPException(status_code=404, detail="Facture not found")
     return facture
 
-@app.delete("/facture/{facture_id}")
-def delete_facture(facture_id: int, session: SessionDep = Depends(get_session)):
-    facture = session.get(Facture, facture_id)
-    if not facture:
-        raise HTTPException(status_code=404, detail="Facture not found")
-    session.delete(facture)
-    session.commit()
-    return {"ok": True}
+
 
 @app.get("/facture/{facture_id}/logement")
 def read_facture_logement(facture_id: int, session: SessionDep = Depends(get_session)):
@@ -589,9 +631,9 @@ async def get_consommation(
 
 
 @app.get("/etat", response_class=HTMLResponse)
-async def etat(request: Request, session: SessionDep = Depends(get_session)):
-    capteurs = session.exec(select(CapteurActionneur)).all()
-    return templates.TemplateResponse("etat.html", {"request": request, "capteurs": capteurs})
+async def etat(request: Request, session: Session = Depends(get_session)):
+    logements = session.exec(select(Logement)).all()
+    return templates.TemplateResponse("etat.html", {"request": request, "logements": logements})
 
 @app.get("/economies", response_class=HTMLResponse)
 async def economies(request: Request, session: SessionDep = Depends(get_session)):

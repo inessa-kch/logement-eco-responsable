@@ -110,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-
     // Fetch Factures for the selected Logement
     async function fetchAndUpdateFactures(logementId) {
         const response = await fetch(`/factures?logement_id=${logementId}&json=true`);
@@ -137,9 +136,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     Date: ${facture.date_facture}<br>
                     Montant: €${facture.montant}<br>
                     Consommation: ${facture.valeur_consommation} ${facture.unite_consommation}
+                    <button class="btn btn-danger btn-sm" data-facture-id="${facture.id_facture}">Delete Facture</button>
                 `;
                 factureListContainer.appendChild(factureItem);
             });
+
+            // Add event listeners to delete buttons
+            const deleteButtons = document.querySelectorAll('.btn-danger');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', async function() {
+                    const factureId = button.getAttribute('data-facture-id');
+                    await deleteFacture(factureId);
+                    fetchAndUpdateCharts(selectedLogementId);
+                    fetchAndUpdateFactures(selectedLogementId);
+                });
+            });
+        }
+    }
+
+    // Delete Facture
+    async function deleteFacture(factureId) {
+        const response = await fetch(`/facture/${factureId}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            console.log(`Facture ${factureId} deleted successfully.`);
+        } else {
+            const errorText = await response.text();
+            console.error('Error deleting facture:', errorText);
+            alert('Erreur lors de la suppression de la facture.');
         }
     }
 
@@ -230,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const newFacture = await response.json();
             if (selectedLogementId && parseInt(selectedLogementId) === newFacture.id_logement) {
                 fetchAndUpdateCharts(selectedLogementId);
-                fetchAndUpdateFactures(selectedLogementId);
+                fetchAndUpdateFactures(selectedLogementId); // Update factures list
             }
             factureForm.reset();
         } else {

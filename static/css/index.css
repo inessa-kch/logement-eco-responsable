@@ -1,17 +1,19 @@
 /* Ensure all days are on the same row */
 .d-flex {
     display: flex;
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: wrap; /* Allow wrapping */
     justify-content: space-evenly; /* Distribute evenly */
 }
 
 /* Style for the individual day boxes */
 .day-box {
     flex: 1; /* Equal width for all days */
-    max-width: 12%; /* Restrict size for 7 items on a row */
-    margin: 0 10px; /* Remove default margin */
+    max-width: 100%; /* Allow full width for responsiveness */
+    margin: 10px 0; /* Add margin for spacing */
     padding: 0 5px; /* Add slight padding */
     text-align: center;
+    width: 150px; /* Fixed width */
+    height: 250px; /* Fixed height */
 }
 
 /* Card adjustments */
@@ -21,8 +23,8 @@
     border-radius: 5px; /* Rounded corners */
     border: none;
     padding: 15px;
-    width: 150px; /* Fixed width */
-    height: 200px; /* Fixed height */
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
     display: flex;
     flex-direction: column;
     justify-content: space-between; /* Ensure content is spaced evenly */

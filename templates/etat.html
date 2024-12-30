@@ -7,32 +7,33 @@
 {% endblock %}
 
 {% block content %}
-<h1>État des Capteurs/Actionneurs</h1>
+<div class="container">
+    <h2>Choisissez un Logement</h2>
+    <div class="logement-selection">
+        {% for logement in logements %}
+        <button class="btn custom-button" data-logement-id="{{ logement.id_logement }}">
+            {{ logement.adresse }}
+        </button>
+        {% endfor %}
+    </div>
 
-<!-- Logement Selection Buttons -->
-<h2>Choisissez un Logement</h2>
-<div class="logement-selection">
-    {% for logement in logements %}
-    <button class="btn custom-button" data-logement-id="{{ logement.id_logement }}">
-        {{ logement.adresse }}
-    </button>
-    {% endfor %}
+    <div class="table-wrapper">
+        <table class="responsive-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Type</th>
+                    <th>Port</th>
+                    <th>Dernière Mesure</th>
+                    <th>État</th>
+                </tr>
+            </thead>
+            <tbody id="capteurTableBody">
+                <!-- Capteurs will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
 </div>
-
-<table class="table mt-4">
-    <thead>
-        <tr>
-            <th>Nom</th>
-            <th>Type</th>
-            <th>Port</th>
-            <th>Dernière Mesure</th>
-            <th>État</th>
-        </tr>
-    </thead>
-    <tbody id="capteurTableBody">
-        <!-- Capteurs will be dynamically added here -->
-    </tbody>
-</table>
 {% endblock %}
 
 {% block scripts %}

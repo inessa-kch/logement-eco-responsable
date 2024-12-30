@@ -1,3 +1,23 @@
+/* General container styling */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 0; /* Remove top padding */
+}
+
+
+
+/* Logement selection */
+.logement-selection {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start; /* Align buttons to the left */
+  gap: 10px; /* Spacing between buttons */
+  margin-bottom: 20px; /* Add bottom margin to separate from table */
+}
+
+/* Custom button styling */
 .custom-button {
   background-color: #4CAF50; /* Green */
   color: white;
@@ -5,17 +25,67 @@
   padding: 10px 20px;
   text-align: center;
   text-decoration: none;
-  display: inline-block;
   font-size: 16px;
-  margin: 4px 2px;
   cursor: pointer;
   border-radius: 4px;
+  transition: background-color 0.3s;
+  margin: 4px 2px !important;  /* Ensure margin is applied */
 }
 
 .custom-button:hover {
   background-color: #45a049; /* Darker green */
 }
 
+/* Table wrapper for responsiveness */
+.table-wrapper {
+  overflow-x: auto; /* Add horizontal scrolling for smaller screens */
+  margin-top: 20px;
+}
+
+/* Responsive table */
+.responsive-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 auto;
+}
+
+.responsive-table th,
+.responsive-table td {
+  border: 1px solid #ddd;
+  text-align: center;
+  padding: 8px;
+}
+
+.responsive-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+  .custom-button {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+
+
+
+  .responsive-table th, .responsive-table td {
+    font-size: 12px;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .custom-button {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  h1, h2 {
+    font-size: 18px;
+  }
+}
 
 .switch {
   position: relative;

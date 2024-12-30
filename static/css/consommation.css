@@ -11,13 +11,10 @@
     text-align: center;
 }
 
-
-
 .charts-container {
     display: block !important;
     visibility: visible !important;
 }
-
 
 canvas {
     display: block;
@@ -35,7 +32,7 @@ canvas {
     text-decoration: none;
     display: inline-block;
     font-size: 16px;
-    margin: 4px 2px;
+    margin: 4px 2px !important;  /* Ensure margin is applied */
     cursor: pointer;
     border-radius: 4px;
 }
@@ -53,7 +50,7 @@ canvas {
     text-decoration: none;
     display: inline-block;
     font-size: 16px;
-    margin: 4px 2px;
+    margin: 4px 2px !important;  /* Ensure margin is applied */
     cursor: pointer;
     border-radius: 4px;
 }
@@ -61,7 +58,6 @@ canvas {
 .custom-button-facture:hover {
     background-color: #45a049; /* Darker green */
 }
-
 
 .scrollable-list {
     max-height: 400px; /* Adjust the height as needed */

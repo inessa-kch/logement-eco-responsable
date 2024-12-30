@@ -7,29 +7,31 @@
 {% endblock %}
 
 {% block content %}
-<h1>Économies Réalisées</h1>
-<h2>Choisissez un Logement</h2>
-<div class="logement-selection">
-    {% for logement in logements %}
-    <button class="btn custom-button" data-logement-id="{{ logement.id_logement }}">
-        {{ logement.adresse }}
-    </button>
-    {% endfor %}
-</div>
-<div class="charts-container">
-    <div class="chart-wrapper">
-        <h4>Économies en Électricité</h4>
-        <div id="chart_div_electricite">
-            <canvas id="economiesChartElectricite"></canvas>
-        </div>
+<div class="container">
+    <h2>Choisissez un Logement</h2>
+    <div class="logement-selection">
+        {% for logement in logements %}
+        <button class="btn custom-button" data-logement-id="{{ logement.id_logement }}">
+            {{ logement.adresse }}
+        </button>
+        {% endfor %}
     </div>
-    <div class="chart-wrapper">
-        <h4>Économies en Eau</h4>
-        <div id="chart_div_eau">
-            <canvas id="economiesChartEau"></canvas>
+
+    <div class="charts-container">
+        <div class="chart-wrapper">
+            <h4>Économies en Électricité</h4>
+            <div id="chart_div_electricite">
+                <canvas id="economiesChartElectricite"></canvas>
+            </div>
+        </div>
+        <div class="chart-wrapper">
+            <h4>Économies en Eau</h4>
+            <div id="chart_div_eau">
+                <canvas id="economiesChartEau"></canvas>
+            </div>
         </div>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/static/js/economies.js"></script>
+<script src="{{ url_for('static', path='js/economies.js') }}"></script>
 {% endblock %}

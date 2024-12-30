@@ -1,0 +1,6 @@
+fastapi==0.88.0
+sqlmodel==0.0.8
+httpx==0.23.0
+jinja2==3.1.2
+uvicorn==0.20.0
+pytz==2022.6

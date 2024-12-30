@@ -19,55 +19,24 @@ This project is an IoT-based home automation system that allows users to monitor
 
 1. **Clone the repository**:
     ```sh
-    git clone https://github.com/yourusername/iot-home-automation.git
-    cd iot-home-automation
+    git clone https://github.com/inessa-kch/logement-eco-responsable.git
+    cd logement-eco-responsable
     ```
 
-2. **Create a virtual environment and activate it**:
-    ```sh
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    ```
-
-3. **Install the dependencies**:
+2. **Install the dependencies**:
     ```sh
     pip install -r requirements.txt
     ```
 
-4. **Run the FastAPI server**:
+3. **Run the FastAPI server**:
     ```sh
-    uvicorn main:app --reload
+    python main.py
     ```
 
-5. **Open your browser and navigate to**:
+4. **Open your browser and navigate to**:
     ```
     http://127.0.0.1:8000
     ```
-
-## Project Structure
-.
-├── main.py                     # Main application file
-├── models.py                   # Database models
-├── templates/
-│   ├── base.html               # Base HTML template
-│   ├── index.html              # Home page template
-│   ├── etat.html               # Sensor/Actuator status page
-│   ├── consommation.html       # Consumption data visualization page
-│   ├── economies.html          # Economies realized visualization page
-├── static/
-│   ├── css/
-│   │   ├── styles.css          # Main stylesheet
-│   │   ├── economies.css       # Economies page stylesheet
-│   ├── js/
-│   │   ├── etat.js             # JavaScript for sensor/actuator status page
-│   │   ├── consommation.js     # JavaScript for consumption data visualization
-│   │   ├── economies.js        # JavaScript for economies realized visualization
-├── SendTemp/
-│   ├── SendTemp.ino            # Arduino code for sending temperature and humidity data
-├── logement.sql                # SQL script for creating and populating the database
-├── requirements.txt            # Python dependencies
-└── README.md                   # Project README file
-
 
 
 ## Usage

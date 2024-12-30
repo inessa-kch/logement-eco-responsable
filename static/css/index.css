@@ -1,19 +1,43 @@
 /* Ensure all days are on the same row */
 .d-flex {
     display: flex;
-    flex-wrap: wrap; /* Allow wrapping */
-    justify-content: space-evenly; /* Distribute evenly */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    justify-content: center; /* Center the boxes */
+    gap: 10px; /* Add spacing between items */
 }
 
 /* Style for the individual day boxes */
 .day-box {
-    flex: 1; /* Equal width for all days */
-    max-width: 100%; /* Allow full width for responsiveness */
-    margin: 10px 0; /* Add margin for spacing */
+    flex: 1 1 calc(100% / 7 - 20px); /* Each box takes 1/7 of the row, minus spacing */
+    max-width: 150px; /* Limit the maximum width */
+    margin: 5px; /* Add margin for spacing and centering */
     padding: 0 5px; /* Add slight padding */
     text-align: center;
-    width: 150px; /* Fixed width */
-    height: 250px; /* Fixed height */
+    height: auto; /* Adjust height to fit content */
+    box-sizing: border-box; /* Ensure padding is included in the dimensions */
+}
+
+/* Adjust for medium screens */
+@media (max-width: 1024px) {
+    .day-box {
+        flex: 1 1 calc(100% / 4 - 20px); /* Each box takes 1/4 of the row */
+        max-width: 150px; /* Maintain the maximum width */
+    }
+}
+
+/* Adjust for smaller screens */
+@media (max-width: 768px) {
+    .day-box {
+        flex: 1 1 calc(100% / 2 - 20px); /* Each box takes 1/2 of the row */
+        max-width: 150px; /* Maintain the maximum width */
+    }
+}
+
+@media (max-width: 576px) {
+    .day-box {
+        flex: 1 1 100%; /* Full width for smaller screens */
+        max-width: 150px; /* Limit the width */
+    }
 }
 
 /* Card adjustments */
@@ -23,8 +47,8 @@
     border-radius: 5px; /* Rounded corners */
     border: none;
     padding: 15px;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
+    width: 100%; /* Full width of the box */
+    height: 100%; /* Full height of the box */
     display: flex;
     flex-direction: column;
     justify-content: space-between; /* Ensure content is spaced evenly */

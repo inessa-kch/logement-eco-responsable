@@ -6,10 +6,12 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, timezone
 import httpx
 from contextlib import asynccontextmanager
 import json
+import pytz
+import random
 
 sql_file_name = "database.db"
 sqlite_url = f"sqlite:///{sql_file_name}"
@@ -77,13 +79,14 @@ class CapteurActionneur(SQLModel, table=True):
     id_piece: int = Field(foreign_key="piece.id_piece")
     port_communication: int
     id_type: int = Field(foreign_key="typecapteuractionneur.id_type")
+    
 
 class Mesure(SQLModel, table=True):
     __tablename__ = "mesure"
     __table_args__ = {"extend_existing": True}
     id_mesure: Optional[int] = Field(default=None, primary_key=True)
     valeur: int
-    date_mesure: datetime = Field(default_factory=datetime.utcnow)
+    date_mesure: datetime = Field(default_factory=lambda: datetime.now(ZoneInfo("Europe/Paris")))
     id_capAct: int = Field(foreign_key="capteuractionneur.id_capAct")
 
 class Facture(SQLModel, table=True):
@@ -96,9 +99,6 @@ class Facture(SQLModel, table=True):
     valeur_consommation: float
     unite_consommation: str
     id_logement: int = Field(foreign_key="logement.id_logement")
-
-
-
 
 
 
@@ -275,6 +275,8 @@ def create_capteuractionneur(
     session.refresh(capteuractionneur)
     return capteuractionneur
 
+
+
 @app.get("/capteuractionneurs", response_class=JSONResponse)
 async def get_capteuractionneurs(
     session: Session = Depends(get_session),
@@ -291,22 +293,31 @@ async def get_capteuractionneurs(
 
         # Fetch all capteuractionneurs for the fetched pieces and join with typecapteuractionneur
         query = (
-            select(CapteurActionneur, TypeCapteurActionneur.nom_type)
+            select(CapteurActionneur, TypeCapteurActionneur.nom_type, TypeCapteurActionneur.unite_mesure, Mesure.valeur)
             .join(TypeCapteurActionneur, CapteurActionneur.id_type == TypeCapteurActionneur.id_type)
+            .outerjoin(Mesure, CapteurActionneur.id_capAct == Mesure.id_capAct)
             .where(CapteurActionneur.id_piece.in_(piece_ids))
+            .order_by(Mesure.date_mesure.desc())
         )
         results = session.exec(query).all()
-        capteuractionneurs = [
-            {
-                "id_capAct": capteuractionneur.id_capAct,
-                "reference_commerciale": capteuractionneur.reference_commerciale,
-                "id_piece": capteuractionneur.id_piece,
-                "port_communication": capteuractionneur.port_communication,
-                "nom_type": nom_type,
-            }
-            for capteuractionneur, nom_type in results
-        ]
-        print(f"Fetched capteuractionneurs: {capteuractionneurs}")
+        
+        capteuractionneurs = []
+        seen_capteurs = set()
+        for capteuractionneur, nom_type, unite_mesure, valeur in results:
+            if capteuractionneur.id_capAct not in seen_capteurs:
+                capteuractionneurs.append({
+                    "id_capAct": capteuractionneur.id_capAct,
+                    "reference_commerciale": capteuractionneur.reference_commerciale,
+                    "id_piece": capteuractionneur.id_piece,
+                    "port_communication": capteuractionneur.port_communication,
+                    "nom_type": nom_type,
+                    "unite_mesure": unite_mesure,
+                    "last_mesure": valeur,
+                    "last_mesure_value": valeur if unite_mesure == "bool" else None
+                })
+                seen_capteurs.add(capteuractionneur.id_capAct)
+        
+        # print(f"Fetched capteuractionneurs: {capteuractionneurs}")
     except Exception as e:
         print(f"Error fetching capteuractionneurs: {e}")
         return JSONResponse({"error": "Internal Server Error"}, status_code=500)
@@ -318,8 +329,6 @@ async def get_capteuractionneurs(
         "request": request,
         "capteuractionneurs": capteuractionneurs
     })
-
-
 
 @app.get("/capteuractionneur/{capteuractionneur_id}")
 def read_capteuractionneur(capteuractionneur_id: int, session: SessionDep = Depends(get_session)) -> CapteurActionneur:
@@ -350,7 +359,10 @@ def read_capteuractionneur_piece(capteuractionneur_id: int, session: SessionDep 
 
 # MESURE
 @app.post("/mesure/")
-def create_mesure(mesure: Mesure, session: SessionDep = Depends(get_session)) -> Mesure:
+async def create_mesure(mesure: Mesure, session: Session = Depends(get_session)) -> Mesure:
+    local_tz = pytz.timezone("Europe/Paris")  
+    now = datetime.now(local_tz)
+    mesure.date_mesure = now.replace(microsecond=0)
     session.add(mesure)
     session.commit()
     session.refresh(mesure)
@@ -636,12 +648,56 @@ async def etat(request: Request, session: Session = Depends(get_session)):
     return templates.TemplateResponse("etat.html", {"request": request, "logements": logements})
 
 @app.get("/economies", response_class=HTMLResponse)
-async def economies(request: Request, session: SessionDep = Depends(get_session)):
-    # Fetch data for the chart
-    query = select(Facture.type_facture, func.sum(Facture.montant).label("total_amount")).group_by(Facture.type_facture)
-    grouped_data = session.exec(query).all()
-    chart_data = [["Type de facture", "Montant total"]] + [[item.type_facture, item.total_amount] for item in grouped_data]
-    return templates.TemplateResponse("economies.html", {"request": request, "chart_data": chart_data})
+async def get_economies(
+    request: Request,
+    session: Session = Depends(get_session),
+    logement_id: Optional[int] = None,
+    json: bool = False
+):
+    logements = session.exec(select(Logement)).all()
+
+    # Query to fetch line chart data for Electricite and Eau
+    query = select(
+        Facture.date_facture, 
+        Facture.valeur_consommation, 
+        Facture.unite_consommation, 
+        Facture.id_logement
+    )
+    
+    # Filter by logement_id if provided
+    if logement_id is not None:
+        query = query.where(Facture.id_logement == logement_id)
+
+    electricite_data = session.exec(query.where(Facture.type_facture == 'Electricite')).all()
+    eau_data = session.exec(query.where(Facture.type_facture == 'Eau')).all()
+
+    # Generate hypothetical higher values
+    economies_data_electricite = []
+    for row in electricite_data:
+        date, valeur, unite, id_logement = row
+        valeur_hypothetique = valeur * random.uniform(1.1, 1.5)  # Simulated higher value
+        economies_data_electricite.append([date, valeur, valeur_hypothetique])
+
+    economies_data_eau = []
+    for row in eau_data:
+        date, valeur, unite, id_logement = row
+        valeur_hypothetique = valeur * random.uniform(1.1, 1.5)  # Simulated higher value
+        economies_data_eau.append([date, valeur, valeur_hypothetique])
+
+    # Return JSON for AJAX requests
+    if json:
+        return JSONResponse({
+            "economies_data_electricite": economies_data_electricite,
+            "economies_data_eau": economies_data_eau
+        })
+
+    # Default: Return HTML page with data
+    return templates.TemplateResponse("economies.html", {
+        "request": request,
+        "logements": logements,
+        "economies_data_electricite": economies_data_electricite,
+        "economies_data_eau": economies_data_eau
+    })
 
 
 @app.get("/configuration", response_class=HTMLResponse)

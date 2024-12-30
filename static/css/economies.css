@@ -1,0 +1,38 @@
+.custom-button {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  
+  .custom-button:hover {
+    background-color: #45a049; /* Darker green */
+  }
+
+  .charts-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.chart-wrapper {
+    flex: 1;
+    min-width: 45%;
+    margin: 10px;
+}
+
+.chart-wrapper h4 {
+    text-align: center;
+}
+
+#chart_div_electricite, #chart_div_eau {
+    width: 100%;
+    height: 400px;
+}

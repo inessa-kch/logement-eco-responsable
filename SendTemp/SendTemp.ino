@@ -68,8 +68,24 @@ void loop() {
     }
 
     http.end();
+
+
+    //post humidity value for id_capAct = 3
+        http.begin(client, serverName);  // Reinitialize the HTTP client
+    String postDataHum = "{\"id_capAct\": 3, \"valeur\": " + String(temp_hum_val[0]) + "}";
+    http.addHeader("Content-Type", "application/json");
+    int httpResponseCodeHum = http.POST(postDataHum);
+    if (httpResponseCodeHum > 0) {
+      String responseHum = http.getString();
+      Serial.println(httpResponseCodeHum);
+      Serial.println(responseHum);
+    } else {
+      Serial.print("Error on sending POST (Humidity): ");
+      Serial.println(httpResponseCodeHum);
+    }
+    http.end();
   }
 
-  delay(3600000); // Send data every hour
+  delay(10000); // Send data every hour
 
 }

@@ -2,26 +2,34 @@
 
 {% block title %}Économies Réalisées{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/economies.css') }}">
+{% endblock %}
+
 {% block content %}
 <h1>Économies Réalisées</h1>
-<div id="chart_div"></div>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript">
-    google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(drawChart);
-
-    function drawChart() {
-        var data = google.visualization.arrayToDataTable({{ chart_data | safe }});
-
-        var options = {
-            title: 'Économies Réalisées',
-            curveType: 'function',
-            legend: { position: 'bottom' }
-        };
-
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-
-        chart.draw(data, options);
-    }
-</script>
+<h2>Choisissez un Logement</h2>
+<div class="logement-selection">
+    {% for logement in logements %}
+    <button class="btn custom-button" data-logement-id="{{ logement.id_logement }}">
+        {{ logement.adresse }}
+    </button>
+    {% endfor %}
+</div>
+<div class="charts-container">
+    <div class="chart-wrapper">
+        <h4>Économies en Électricité</h4>
+        <div id="chart_div_electricite">
+            <canvas id="economiesChartElectricite"></canvas>
+        </div>
+    </div>
+    <div class="chart-wrapper">
+        <h4>Économies en Eau</h4>
+        <div id="chart_div_eau">
+            <canvas id="economiesChartEau"></canvas>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/economies.js"></script>
 {% endblock %}
